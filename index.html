@@ -1,0 +1,1563 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Powerful Search</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #07080f;
+        --surface: rgba(255, 255, 255, 0.06);
+        --surface-hover: rgba(255, 255, 255, 0.1);
+        --border: rgba(255, 255, 255, 0.1);
+        --border-focus: rgba(120, 180, 255, 0.5);
+        --text-primary: #f0f2ff;
+        --text-secondary: rgba(200, 210, 240, 0.55);
+        --accent: #5b8cff;
+        --accent2: #a78bfa;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        color: var(--text-primary);
+        font-family: "DM Sans", sans-serif;
+        overflow-x: hidden;
+      }
+
+      /* ── BACKGROUND ── */
+      #bgImage {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        transition:
+          filter 0.4s ease,
+          opacity 0.5s ease,
+          transform 0.4s ease;
+        opacity: 0;
+      }
+      #bgImage.loaded {
+        opacity: 1;
+      }
+      .bg-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background: rgba(4, 6, 18, 0.52);
+        transition: background 0.3s;
+      }
+      .bg-gradient {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            ellipse 80% 60% at 20% 10%,
+            rgba(40, 60, 160, 0.2) 0%,
+            transparent 70%
+          ),
+          radial-gradient(
+            ellipse 60% 50% at 80% 80%,
+            rgba(100, 40, 160, 0.16) 0%,
+            transparent 65%
+          );
+      }
+      .stars {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+        transition: opacity 0.5s;
+      }
+      .star {
+        position: absolute;
+        border-radius: 50%;
+        background: #fff;
+        animation: twinkle var(--d, 3s) ease-in-out infinite;
+        animation-delay: var(--delay, 0s);
+        opacity: 0;
+      }
+      @keyframes twinkle {
+        0%,
+        100% {
+          opacity: 0;
+          transform: scale(0.5);
+        }
+        50% {
+          opacity: var(--op, 0.7);
+          transform: scale(1);
+        }
+      }
+
+      /* ── BG CONTROLS ── */
+      .bg-controls {
+        position: fixed;
+        bottom: 1.4rem;
+        right: 1.4rem;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.55rem;
+      }
+      .bg-panel {
+        background: rgba(8, 10, 24, 0.88);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.1rem 1.15rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        min-width: 220px;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(8px) scale(0.97);
+        transition:
+          opacity 0.25s,
+          transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .bg-panel.open {
+        opacity: 1;
+        pointer-events: all;
+        transform: translateY(0) scale(1);
+      }
+      .bg-panel-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+      }
+      .bg-panel-label {
+        font-size: 0.72rem;
+        color: var(--text-secondary);
+        white-space: nowrap;
+      }
+      .upload-btn {
+        width: 100%;
+        padding: 0.52rem 0.85rem;
+        border-radius: 10px;
+        background: rgba(91, 140, 255, 0.13);
+        border: 1.5px dashed rgba(91, 140, 255, 0.38);
+        color: #a8c4ff;
+        font-size: 0.78rem;
+        font-family: "DM Sans", sans-serif;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s;
+        display: block;
+      }
+      .upload-btn:hover {
+        background: rgba(91, 140, 255, 0.22);
+        border-color: rgba(91, 140, 255, 0.6);
+      }
+      .clear-btn {
+        width: 100%;
+        padding: 0.4rem 0.8rem;
+        border-radius: 9px;
+        background: rgba(255, 91, 106, 0.1);
+        border: 1px solid rgba(255, 91, 106, 0.25);
+        color: rgba(255, 150, 158, 0.8);
+        font-size: 0.72rem;
+        font-family: "DM Sans", sans-serif;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .clear-btn:hover {
+        background: rgba(255, 91, 106, 0.22);
+      }
+      .blur-slider {
+        -webkit-appearance: none;
+        width: 95px;
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.12);
+        outline: none;
+        cursor: pointer;
+      }
+      .blur-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 6px rgba(91, 140, 255, 0.5);
+        cursor: pointer;
+      }
+      .bg-toggle-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+        background: rgba(8, 10, 24, 0.75);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        font-size: 1.05rem;
+      }
+      .bg-toggle-btn:hover {
+        color: var(--text-primary);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+
+      /* ── LAYOUT ── */
+      .page {
+        position: relative;
+        z-index: 1;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1.5rem 5rem;
+      }
+
+      /* ── SEARCH ── */
+      .search-container {
+        width: 100%;
+        max-width: 660px;
+        animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      .search-engine-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        justify-content: center;
+      }
+      .engine-tab {
+        padding: 0.3rem 0.9rem;
+        border-radius: 99px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text-secondary);
+        font-size: 0.78rem;
+        font-family: "DM Sans", sans-serif;
+        cursor: pointer;
+        transition: all 0.2s;
+        backdrop-filter: blur(8px);
+      }
+      .engine-tab:hover {
+        color: var(--text-primary);
+        border-color: rgba(255, 255, 255, 0.18);
+      }
+      .engine-tab.active {
+        background: rgba(91, 140, 255, 0.18);
+        border-color: var(--border-focus);
+        color: #a8c4ff;
+      }
+      .search-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+      .search-icon {
+        position: absolute;
+        left: 1.2rem;
+        color: var(--text-secondary);
+        width: 18px;
+        height: 18px;
+        pointer-events: none;
+        flex-shrink: 0;
+      }
+      .search-input {
+        width: 100%;
+        padding: 1.05rem 4.5rem 1.05rem 3.2rem;
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-family: "DM Sans", sans-serif;
+        outline: none;
+        transition:
+          border-color 0.25s,
+          box-shadow 0.25s,
+          background 0.25s;
+      }
+      .search-input::placeholder {
+        color: var(--text-secondary);
+      }
+      .search-input:focus {
+        border-color: var(--border-focus);
+        background: rgba(255, 255, 255, 0.09);
+        box-shadow:
+          0 0 0 3px rgba(91, 140, 255, 0.13),
+          0 8px 40px rgba(0, 0, 0, 0.4);
+      }
+      .search-btn {
+        position: absolute;
+        right: 0.6rem;
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 11px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          transform 0.18s,
+          box-shadow 0.18s;
+        box-shadow: 0 2px 14px rgba(91, 140, 255, 0.4);
+      }
+      .search-btn:hover {
+        transform: scale(1.07);
+        box-shadow: 0 4px 22px rgba(91, 140, 255, 0.55);
+      }
+      .search-btn:active {
+        transform: scale(0.96);
+      }
+      .search-btn svg {
+        color: #fff;
+        width: 15px;
+        height: 15px;
+      }
+
+      /* ── LINKS SECTION ── */
+      .links-section {
+        width: 100%;
+        max-width: 900px;
+        margin-top: 2.5rem;
+        animation: fadeUp 0.9s 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      .links-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        cursor: pointer;
+        width: fit-content;
+        margin: 0 auto;
+        padding: 0.55rem 1.1rem;
+        border-radius: 99px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text-secondary);
+        font-size: 0.82rem;
+        font-family: "DM Sans", sans-serif;
+        transition: all 0.22s;
+        backdrop-filter: blur(12px);
+        user-select: none;
+      }
+      .links-toggle:hover {
+        color: var(--text-primary);
+        border-color: rgba(255, 255, 255, 0.18);
+        background: var(--surface-hover);
+      }
+      .links-toggle .toggle-icon {
+        width: 14px;
+        height: 14px;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        flex-shrink: 0;
+      }
+      .links-toggle.open .toggle-icon {
+        transform: rotate(180deg);
+      }
+      .links-toggle .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        opacity: 0.7;
+      }
+
+      .links-grid-wrap {
+        overflow: hidden;
+        max-height: 0;
+        transition:
+          max-height 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+          opacity 0.35s ease,
+          margin 0.35s ease;
+        opacity: 0;
+        margin-top: 0;
+      }
+      .links-grid-wrap.open {
+        max-height: 2000px;
+        opacity: 1;
+        margin-top: 1.4rem;
+      }
+
+      .links-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+      .links-title {
+        font-family: "Syne", sans-serif;
+        font-size: 0.75rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+      .add-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.38rem 0.85rem;
+        border-radius: 99px;
+        background: rgba(91, 140, 255, 0.14);
+        border: 1px solid rgba(91, 140, 255, 0.3);
+        color: #a8c4ff;
+        font-size: 0.78rem;
+        font-family: "DM Sans", sans-serif;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .add-btn:hover {
+        background: rgba(91, 140, 255, 0.24);
+        border-color: rgba(91, 140, 255, 0.5);
+      }
+      .add-btn svg {
+        width: 12px;
+        height: 12px;
+      }
+      .links-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 0.8rem;
+      }
+
+      /* ── LINK CARD ── */
+      .link-card {
+        position: relative;
+        background: var(--surface);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1rem 0.85rem 0.85rem;
+        cursor: pointer;
+        transition:
+          transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+          background 0.2s,
+          border-color 0.2s,
+          box-shadow 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+        user-select: none;
+      }
+      @keyframes cardIn {
+        from {
+          opacity: 0;
+          transform: scale(0.88) translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+      .link-card:hover {
+        transform: translateY(-3px) scale(1.03);
+        background: var(--surface-hover);
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow:
+          0 8px 30px rgba(0, 0, 0, 0.35),
+          0 0 0 1px rgba(91, 140, 255, 0.1);
+      }
+      .link-card:active {
+        transform: scale(0.97);
+      }
+      .card-actions {
+        position: absolute;
+        top: 0.45rem;
+        right: 0.45rem;
+        display: flex;
+        gap: 0.3rem;
+        opacity: 0;
+        transition: opacity 0.18s;
+      }
+      .link-card:hover .card-actions {
+        opacity: 1;
+      }
+      .card-action-btn {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: background 0.15s;
+        font-size: 0.65rem;
+      }
+      .card-action-btn.edit {
+        background: rgba(91, 140, 255, 0.25);
+        color: #a8c4ff;
+      }
+      .card-action-btn.edit:hover {
+        background: rgba(91, 140, 255, 0.45);
+      }
+      .card-action-btn.del {
+        background: rgba(255, 91, 106, 0.2);
+        color: #ff8f9a;
+      }
+      .card-action-btn.del:hover {
+        background: rgba(255, 91, 106, 0.4);
+      }
+      .card-favicon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.07);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .card-favicon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .card-name {
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+      }
+      .card-url {
+        font-size: 0.62rem;
+        color: var(--text-secondary);
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+      }
+      .card-cat {
+        font-size: 0.58rem;
+        padding: 0.12rem 0.42rem;
+        border-radius: 99px;
+        background: rgba(91, 140, 255, 0.13);
+        color: rgba(168, 196, 255, 0.7);
+        border: 1px solid rgba(91, 140, 255, 0.2);
+        white-space: nowrap;
+      }
+      .link-card.add-placeholder {
+        border-style: dashed;
+        border-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-secondary);
+        background: transparent;
+        justify-content: center;
+        min-height: 98px;
+        gap: 0.35rem;
+      }
+      .link-card.add-placeholder:hover {
+        border-color: rgba(91, 140, 255, 0.35);
+        color: #8ab4ff;
+        background: rgba(91, 140, 255, 0.05);
+        box-shadow: none;
+        transform: translateY(-2px);
+      }
+      .add-placeholder-icon {
+        font-size: 1.25rem;
+        opacity: 0.45;
+      }
+      .add-placeholder-text {
+        font-size: 0.72rem;
+      }
+
+      /* ── MODAL ── */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+      }
+      .modal-overlay.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .modal {
+        background: #0c0e1e;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 22px;
+        padding: 1.8rem;
+        width: 100%;
+        max-width: 440px;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+        transform: scale(0.92) translateY(12px);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .modal-overlay.open .modal {
+        transform: scale(1) translateY(0);
+      }
+      .modal-title {
+        font-family: "Syne", sans-serif;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1.3rem;
+      }
+      .modal-field {
+        margin-bottom: 0.9rem;
+      }
+      .modal-label {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-bottom: 0.38rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      .modal-input {
+        width: 100%;
+        padding: 0.6rem 0.9rem;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        font-family: "DM Sans", sans-serif;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .modal-input:focus {
+        border-color: var(--border-focus);
+        box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.1);
+      }
+      .modal-input::placeholder {
+        color: rgba(200, 210, 240, 0.25);
+      }
+
+      /* emoji picker */
+      .emoji-cats {
+        display: flex;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.65rem;
+      }
+      .emoji-cat-btn {
+        padding: 0.2rem 0.58rem;
+        border-radius: 99px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        font-size: 0.68rem;
+        font-family: "DM Sans", sans-serif;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .emoji-cat-btn.active,
+      .emoji-cat-btn:hover {
+        background: rgba(91, 140, 255, 0.18);
+        border-color: rgba(91, 140, 255, 0.42);
+        color: #a8c4ff;
+      }
+      .emoji-grid {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 0.35rem;
+        max-height: 150px;
+        overflow-y: auto;
+        padding-right: 2px;
+      }
+      .emoji-grid::-webkit-scrollbar {
+        width: 4px;
+      }
+      .emoji-grid::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+      }
+      .emoji-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+        padding: 0;
+      }
+      .emoji-btn:hover {
+        background: rgba(91, 140, 255, 0.2);
+        border-color: rgba(91, 140, 255, 0.4);
+        transform: scale(1.1);
+      }
+      .emoji-btn.selected {
+        background: rgba(91, 140, 255, 0.3);
+        border-color: rgba(91, 140, 255, 0.65);
+        transform: scale(1.1);
+        box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.22);
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 0.6rem;
+        margin-top: 1.3rem;
+      }
+      .modal-btn {
+        flex: 1;
+        padding: 0.65rem;
+        border-radius: 10px;
+        border: none;
+        font-size: 0.88rem;
+        font-family: "DM Sans", sans-serif;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.18s;
+      }
+      .modal-btn.cancel {
+        background: var(--surface);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+      }
+      .modal-btn.cancel:hover {
+        background: var(--surface-hover);
+        color: var(--text-primary);
+      }
+      .modal-btn.confirm {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: #fff;
+        box-shadow: 0 2px 12px rgba(91, 140, 255, 0.35);
+      }
+      .modal-btn.confirm:hover {
+        box-shadow: 0 4px 20px rgba(91, 140, 255, 0.5);
+        transform: translateY(-1px);
+      }
+
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(22px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes cardOut {
+        to {
+          opacity: 0;
+          transform: scale(var(--scale, 0.85)) translateY(6px);
+        }
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+      }
+      .icon-source-toggle {
+        display: flex;
+        gap: 0.4rem;
+      }
+      .icon-source-btn {
+        padding: 0.3rem 0.85rem;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-size: 0.75rem;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+      }
+      .icon-source-btn.active {
+        background: rgba(91, 140, 255, 0.18);
+        color: #8ab4ff;
+        border-color: rgba(91, 140, 255, 0.4);
+      }
+      .random-emoji-btn {
+        margin-top: 0.5rem;
+        padding: 0.3rem 0.85rem;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-size: 0.75rem;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+      }
+      .random-emoji-btn:hover {
+        background: rgba(91, 140, 255, 0.18);
+        color: #8ab4ff;
+        border-color: rgba(91, 140, 255, 0.4);
+      }
+      .random-emoji-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .random-emoji-result {
+        font-size: 1.5rem;
+        line-height: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="bgImage"></div>
+    <div class="bg-overlay" id="bgOverlay"></div>
+    <div class="bg-gradient"></div>
+    <div class="stars" id="stars"></div>
+
+    <!-- BG CONTROLS -->
+    <div class="bg-controls">
+      <div class="bg-panel" id="bgPanel">
+        <label class="upload-btn" for="bgFileInput">
+          🖼 上传背景图片
+          <input
+            type="file"
+            id="bgFileInput"
+            accept="image/*"
+            style="display: none"
+          />
+        </label>
+        <div class="bg-panel-row">
+          <span class="bg-panel-label">高斯模糊</span>
+          <input
+            type="range"
+            class="blur-slider"
+            id="blurSlider"
+            min="0"
+            max="40"
+            value="18"
+          />
+        </div>
+        <div class="bg-panel-row">
+          <span class="bg-panel-label">暗度叠层</span>
+          <input
+            type="range"
+            class="blur-slider"
+            id="dimSlider"
+            min="0"
+            max="85"
+            value="52"
+          />
+        </div>
+        <button class="clear-btn" id="clearBgBtn">✕ 清除背景图片</button>
+      </div>
+      <button class="bg-toggle-btn" id="bgToggleBtn" title="背景设置">
+        🎨
+      </button>
+    </div>
+
+    <main class="page">
+      <div class="search-container">
+        <div class="search-engine-tabs">
+          <button class="engine-tab active" data-engine="google">Google</button>
+          <button class="engine-tab" data-engine="bing">Bing</button>
+        </div>
+        <div class="search-wrap">
+          <svg
+            class="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            class="search-input"
+            id="searchInput"
+            type="text"
+            placeholder="搜索任何内容…"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button class="search-btn" id="searchBtn">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="links-section">
+        <button class="links-toggle" id="linksToggle">
+          <span class="dot"></span>
+          <span id="toggleLabel">常用链接</span>
+          <svg
+            class="toggle-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        <div class="links-grid-wrap" id="linksGridWrap">
+          <div class="links-header">
+            <span class="links-title">Quick Links</span>
+            <button class="add-btn" id="addBtn">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              添加链接
+            </button>
+          </div>
+          <div class="links-grid" id="linksGrid"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal">
+        <div class="modal-title" id="modalTitle">添加链接</div>
+        <div class="modal-field">
+          <label class="modal-label" for="inputName">名称</label>
+          <input
+            class="modal-input"
+            id="inputName"
+            type="text"
+            placeholder="例：GitHub"
+          />
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="inputUrl">URL</label>
+          <input
+            class="modal-input"
+            id="inputUrl"
+            type="url"
+            placeholder="https://..."
+          />
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">图标来源</label>
+          <div class="icon-source-toggle">
+            <button type="button" id="toggleFavicon" class="icon-source-btn active">网站图标</button>
+            <button type="button" id="toggleEmoji" class="icon-source-btn">自定义 Emoji</button>
+          </div>
+        </div>
+        <div class="modal-field" id="emojiSection" style="display:none">
+          <label class="modal-label">选择图标</label>
+          <div class="emoji-cats" id="emojiCats"></div>
+          <div class="emoji-grid" id="emojiGrid"></div>
+        </div>
+        <div class="modal-field" id="randomEmojiField" style="display:none">
+          <div class="random-emoji-row">
+            <button type="button" id="randomEmojiBtn" class="random-emoji-btn">🎲 随机 Emoji</button>
+            <span id="randomEmojiResult" class="random-emoji-result"></span>
+          </div>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="inputCat">分类标签（可选）</label>
+          <input
+            class="modal-input"
+            id="inputCat"
+            type="text"
+            placeholder="例：工具、社交、新闻"
+          />
+        </div>
+        <div class="modal-actions">
+          <button class="modal-btn cancel" id="modalCancel">取消</button>
+          <button class="modal-btn confirm" id="modalConfirm">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ── STARS
+      (function () {
+        const c = document.getElementById("stars");
+        for (let i = 0; i < 100; i++) {
+          const s = document.createElement("div");
+          s.className = "star";
+          const sz = Math.random() * 2 + 0.5;
+          s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random() * 100}%;left:${Math.random() * 100}%;--d:${2 + Math.random() * 4}s;--delay:${Math.random() * 5}s;--op:${0.3 + Math.random() * 0.6}`;
+          c.appendChild(s);
+        }
+      })();
+
+      // ── BACKGROUND IMAGE
+      const bgEl = document.getElementById("bgImage");
+      const bgOverlayEl = document.getElementById("bgOverlay");
+      const starsEl = document.getElementById("stars");
+      const blurSlider = document.getElementById("blurSlider");
+      const dimSlider = document.getElementById("dimSlider");
+      const bgPanel = document.getElementById("bgPanel");
+      const bgToggle = document.getElementById("bgToggleBtn");
+
+      let bgBlur = 18,
+        bgDim = 52;
+
+      function applyBg() {
+        bgEl.style.filter = `blur(${bgBlur}px)`;
+        bgEl.style.transform = `scale(${1 + bgBlur * 0.004})`;
+        bgOverlayEl.style.background = `rgba(4,6,18,${bgDim / 100})`;
+      }
+
+      async function loadSavedBg() {
+        try {
+          const res = await fetch('/api/background');
+          if (res.ok) {
+            const bg = await res.json();
+            if (bg.blur != null) {
+              bgBlur = bg.blur;
+              blurSlider.value = bgBlur;
+            }
+            if (bg.dim != null) {
+              bgDim = bg.dim;
+              dimSlider.value = bgDim;
+            }
+            if (bg.filename) {
+              const url = `/uploads/${bg.filename}`;
+              bgEl.style.backgroundImage = `url(${url})`;
+              bgEl.classList.add("loaded");
+              starsEl.style.opacity = "0.3";
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load background:', error);
+        }
+        applyBg();
+      }
+
+      document.getElementById("bgFileInput").addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const url = data.url;
+            bgEl.style.backgroundImage = `url(${url})`;
+            bgEl.classList.add("loaded");
+            starsEl.style.opacity = "0.3";
+
+            // Save background settings with new filename
+            await fetch('/api/background', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                filename: data.filename,
+                blur: bgBlur,
+                dim: bgDim
+              })
+            });
+            applyBg();
+          } else {
+            console.error('Upload failed:', await res.text());
+          }
+        } catch (error) {
+          console.error('Upload error:', error);
+        }
+      });
+
+      let bgSaveTimeout;
+      blurSlider.addEventListener("input", async () => {
+        bgBlur = +blurSlider.value;
+        applyBg();
+        // Debounce save
+        clearTimeout(bgSaveTimeout);
+        bgSaveTimeout = setTimeout(async () => {
+          try {
+            const res = await fetch('/api/background', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                filename: getCurrentBgFilename(),
+                blur: bgBlur,
+                dim: bgDim
+              })
+            });
+            if (!res.ok) console.error('Failed to save blur setting');
+          } catch (error) {
+            console.error('Save error:', error);
+          }
+        }, 500);
+      });
+      dimSlider.addEventListener("input", async () => {
+        bgDim = +dimSlider.value;
+        applyBg();
+        // Debounce save
+        clearTimeout(bgSaveTimeout);
+        bgSaveTimeout = setTimeout(async () => {
+          try {
+            const res = await fetch('/api/background', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                filename: getCurrentBgFilename(),
+                blur: bgBlur,
+                dim: bgDim
+              })
+            });
+            if (!res.ok) console.error('Failed to save dim setting');
+          } catch (error) {
+            console.error('Save error:', error);
+          }
+        }, 500);
+      });
+
+      // Helper function to get current background filename
+      function getCurrentBgFilename() {
+        const currentBg = bgEl.style.backgroundImage;
+        if (currentBg && currentBg !== 'none') {
+          const match = currentBg.match(/\/uploads\/([^'")]+)/);
+          return match ? match[1] : '';
+        }
+        return '';
+      }
+      document.getElementById("clearBgBtn").addEventListener("click", async () => {
+        bgEl.style.backgroundImage = "";
+        bgEl.classList.remove("loaded");
+        starsEl.style.opacity = "1";
+
+        try {
+          await fetch('/api/background', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              filename: '',
+              blur: bgBlur,
+              dim: bgDim
+            })
+          });
+        } catch (error) {
+          console.error('Failed to clear background:', error);
+        }
+      });
+      bgToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bgPanel.classList.toggle("open");
+      });
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".bg-controls")) bgPanel.classList.remove("open");
+      });
+      loadSavedBg();
+
+      // ── SEARCH
+      let engine = "google";
+      const engines = {
+        google: (q) =>
+          `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+        bing: (q) => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
+      };
+      document.querySelectorAll(".engine-tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".engine-tab")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          engine = btn.dataset.engine;
+        });
+      });
+      function doSearch() {
+        const q = document.getElementById("searchInput").value.trim();
+        if (!q) return;
+        window.open(engines[engine](q), "_blank");
+      }
+      document.getElementById("searchBtn").addEventListener("click", doSearch);
+      document
+        .getElementById("searchInput")
+        .addEventListener("keydown", (e) => {
+          if (e.key === "Enter") doSearch();
+        });
+
+      // ── LINKS
+      const DEFAULTS = [
+        {
+          id: 1,
+          name: "GitHub",
+          url: "https://github.com",
+          icon: "🐙",
+          cat: "工具",
+        },
+        {
+          id: 2,
+          name: "YouTube",
+          url: "https://youtube.com",
+          icon: "📺",
+          cat: "娱乐",
+        },
+        {
+          id: 3,
+          name: "Twitter/X",
+          url: "https://x.com",
+          icon: "🐦",
+          cat: "社交",
+        },
+        {
+          id: 4,
+          name: "Gmail",
+          url: "https://mail.google.com",
+          icon: "✉️",
+          cat: "邮件",
+        },
+        {
+          id: 5,
+          name: "Wikipedia",
+          url: "https://www.wikipedia.org",
+          icon: "📖",
+          cat: "知识",
+        },
+        {
+          id: 6,
+          name: "Figma",
+          url: "https://figma.com",
+          icon: "🎨",
+          cat: "设计",
+        },
+      ];
+      async function loadLinks() {
+        try {
+          const res = await fetch('/api/links');
+          if (res.ok) {
+            return await res.json();
+          }
+        } catch (error) {
+          console.error('Failed to load links:', error);
+        }
+        return [...DEFAULTS];
+      }
+
+      async function saveLinks() {
+        try {
+          await fetch('/api/links', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(links)
+          });
+        } catch (error) {
+          console.error('Failed to save links:', error);
+        }
+      }
+
+      let links = [];
+      // Load links asynchronously on page load
+      loadLinks().then(loadedLinks => {
+        links = loadedLinks;
+        renderGrid();
+      });
+      function getFavicon(url) {
+        try {
+          return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=64`;
+        } catch {
+          return null;
+        }
+      }
+
+      const gridEl = document.getElementById("linksGrid");
+      function renderGrid() {
+        gridEl.innerHTML = "";
+        links.forEach((lk, idx) => {
+          const card = document.createElement("div");
+          card.className = "link-card";
+          card.style.animationDelay = `${idx * 0.04}s`;
+          const fav = lk.useEmoji ? null : getFavicon(lk.url);
+          card.innerHTML = `
+      <div class="card-actions">
+        <button class="card-action-btn edit" title="编辑">✎</button>
+        <button class="card-action-btn del"  title="删除">✕</button>
+      </div>
+      <div class="card-favicon">${fav ? `<img src="${fav}" alt="" onerror="this.parentElement.innerHTML='${lk.icon.replace(/'/g, "&#39;")}'">` : lk.icon}</div>
+      <div class="card-name">${lk.name}</div>
+      <div class="card-url">${new URL(lk.url).hostname.replace("www.", "")}</div>
+      ${lk.cat ? `<span class="card-cat">${lk.cat}</span>` : ""}
+    `;
+          card.addEventListener("click", (e) => {
+            if (!e.target.closest(".card-action-btn"))
+              window.open(lk.url, "_blank");
+          });
+          card.querySelector(".edit").addEventListener("click", (e) => {
+            e.stopPropagation();
+            openModal(lk.id);
+          });
+          card.querySelector(".del").addEventListener("click", (e) => {
+            e.stopPropagation();
+            card.style.animation = "cardOut 0.25s forwards";
+            setTimeout(() => {
+              links = links.filter((l) => l.id !== lk.id);
+              saveLinks();
+              renderGrid();
+            }, 220);
+          });
+          gridEl.appendChild(card);
+        });
+        const plus = document.createElement("div");
+        plus.className = "link-card add-placeholder";
+        plus.innerHTML = `<div class="add-placeholder-icon">＋</div><div class="add-placeholder-text">添加链接</div>`;
+        plus.addEventListener("click", () => openModal());
+        gridEl.appendChild(plus);
+      }
+
+      // toggle
+      const wrapEl = document.getElementById("linksGridWrap"),
+        toggleEl = document.getElementById("linksToggle");
+      toggleEl.addEventListener("click", () => {
+        const o = wrapEl.classList.toggle("open");
+        toggleEl.classList.toggle("open", o);
+        document.getElementById("toggleLabel").textContent = o
+          ? "收起链接"
+          : "常用链接";
+      });
+      document
+        .getElementById("addBtn")
+        .addEventListener("click", () => openModal());
+
+      // ── EMOJI DATA (loaded from server)
+      let EMOJI_CATS = { "全部": null };
+
+      fetch('/api/emojis').then(r => r.json()).then(data => {
+        // Map English group names to Chinese
+        const groupNames = {
+          "Smileys & Emotion": "表情",
+          "People & Body": "人物",
+          "Animals & Nature": "动物自然",
+          "Food & Drink": "食物饮品",
+          "Travel & Places": "旅行地点",
+          "Activities": "活动",
+          "Objects": "物品",
+          "Symbols": "符号",
+          "Flags": "旗帜"
+        };
+        EMOJI_CATS = { "全部": null };
+        Object.entries(data).forEach(([group, emojis]) => {
+          const cn = groupNames[group] || group;
+          EMOJI_CATS[cn] = emojis;
+        });
+      }).catch(() => {
+        // Fallback minimal set
+        EMOJI_CATS = {
+          "全部": null,
+          "常用": ["🌐","⭐","🔗","📌","🏠","💡","🚀","🔥","✨","💎","🎯","⚡"]
+        };
+      });
+
+
+      let activeCat = "全部",
+        selectedEmoji = "🌐",
+        useEmoji = false,
+        editId = null;
+      const inputName = document.getElementById("inputName"),
+        inputUrl = document.getElementById("inputUrl"),
+        inputCat = document.getElementById("inputCat"),
+        overlay = document.getElementById("modalOverlay");
+
+      const toggleFaviconBtn = document.getElementById("toggleFavicon");
+      const toggleEmojiBtn = document.getElementById("toggleEmoji");
+      const emojiSection = document.getElementById("emojiSection");
+
+      toggleFaviconBtn.addEventListener("click", () => {
+        useEmoji = false;
+        toggleFaviconBtn.classList.add("active");
+        toggleEmojiBtn.classList.remove("active");
+        emojiSection.style.display = "none";
+        document.getElementById("randomEmojiField").style.display = "none";
+      });
+      toggleEmojiBtn.addEventListener("click", () => {
+        useEmoji = true;
+        toggleEmojiBtn.classList.add("active");
+        toggleFaviconBtn.classList.remove("active");
+        emojiSection.style.display = "";
+        document.getElementById("randomEmojiField").style.display = "";
+      });
+
+      document.getElementById("randomEmojiBtn").addEventListener("click", () => {
+        const all = allEmojis();
+        const picked = all[Math.floor(Math.random() * all.length)];
+        selectedEmoji = picked;
+        document.getElementById("randomEmojiResult").textContent = picked;
+        buildEmojiUI();
+      });
+
+      function allEmojis() {
+        return [
+          ...new Set(
+            Object.entries(EMOJI_CATS)
+              .filter(([k]) => k !== "全部")
+              .flatMap(([, v]) => v),
+          ),
+        ];
+      }
+      function getEmojis(cat) {
+        return cat === "全部" ? allEmojis() : EMOJI_CATS[cat] || [];
+      }
+
+      function buildEmojiUI() {
+        const catsEl = document.getElementById("emojiCats");
+        catsEl.innerHTML = "";
+        Object.keys(EMOJI_CATS).forEach((cat) => {
+          const b = document.createElement("button");
+          b.className = "emoji-cat-btn" + (cat === activeCat ? " active" : "");
+          b.textContent = cat;
+          b.addEventListener("click", () => {
+            activeCat = cat;
+            buildEmojiUI();
+          });
+          catsEl.appendChild(b);
+        });
+        const g = document.getElementById("emojiGrid");
+        g.innerHTML = "";
+        getEmojis(activeCat).forEach((em) => {
+          const b = document.createElement("button");
+          b.className = "emoji-btn" + (em === selectedEmoji ? " selected" : "");
+          b.textContent = em;
+          b.title = em;
+          b.addEventListener("click", () => {
+            selectedEmoji = em;
+            g.querySelectorAll(".emoji-btn").forEach((x) =>
+              x.classList.remove("selected"),
+            );
+            b.classList.add("selected");
+          });
+          g.appendChild(b);
+        });
+      }
+
+      function openModal(id) {
+        editId = id || null;
+        document.getElementById("modalTitle").textContent = id
+          ? "编辑链接"
+          : "添加链接";
+        if (id) {
+          const lk = links.find((l) => l.id === id);
+          inputName.value = lk.name;
+          inputUrl.value = lk.url;
+          inputCat.value = lk.cat || "";
+          selectedEmoji = lk.icon || "🌐";
+          useEmoji = !!lk.useEmoji;
+        } else {
+          inputName.value = inputUrl.value = inputCat.value = "";
+          selectedEmoji = "🌐";
+          useEmoji = false;
+        }
+        if (useEmoji) {
+          toggleEmojiBtn.classList.add("active");
+          toggleFaviconBtn.classList.remove("active");
+          emojiSection.style.display = "";
+          document.getElementById("randomEmojiField").style.display = "";
+        } else {
+          toggleFaviconBtn.classList.add("active");
+          toggleEmojiBtn.classList.remove("active");
+          emojiSection.style.display = "none";
+          document.getElementById("randomEmojiField").style.display = "none";
+        }
+        document.getElementById("randomEmojiResult").textContent = "";
+        activeCat = "全部";
+        buildEmojiUI();
+        overlay.classList.add("open");
+        setTimeout(() => inputName.focus(), 120);
+      }
+      function closeModal() {
+        overlay.classList.remove("open");
+      }
+
+      document
+        .getElementById("modalCancel")
+        .addEventListener("click", closeModal);
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) closeModal();
+      });
+      document.getElementById("modalConfirm").addEventListener("click", () => {
+        const name = inputName.value.trim();
+        let url = inputUrl.value.trim();
+        if (!name || !url) return;
+        if (!/^https?:\/\//.test(url)) url = "https://" + url;
+        if (editId) {
+          const i = links.findIndex((l) => l.id === editId);
+          links[i] = {
+            ...links[i],
+            name,
+            url,
+            icon: selectedEmoji,
+            useEmoji,
+            cat: inputCat.value.trim(),
+          };
+        } else {
+          links.push({
+            id: Date.now(),
+            name,
+            url,
+            icon: selectedEmoji,
+            useEmoji,
+            cat: inputCat.value.trim(),
+          });
+        }
+        saveLinks();
+        renderGrid();
+        closeModal();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+        if (e.key === "/" && document.activeElement.tagName !== "INPUT") {
+          e.preventDefault();
+          document.getElementById("searchInput").focus();
+        }
+      });
+    </script>
+  </body>
+</html>
