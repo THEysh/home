@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Powerful Search</title>
+    <link rel="icon" id="faviconLink" href="data:," />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
@@ -889,13 +890,14 @@
       <button class="bg-toggle-btn" id="bgToggleBtn" title="背景设置">
         🎨
       </button>
+      <button class="bg-toggle-btn" id="randomFaviconBtn" title="随机网页图标">🎲</button>
     </div>
 
     <main class="page">
       <div class="search-container">
         <div class="search-engine-tabs">
-          <button class="engine-tab active" data-engine="google">Google</button>
           <button class="engine-tab" data-engine="bing">Bing</button>
+          <button class="engine-tab active" data-engine="google">Google</button>
         </div>
         <div class="search-wrap">
           <svg
@@ -946,17 +948,6 @@
         <div class="links-grid-wrap" id="linksGridWrap">
           <div class="links-header">
             <span class="links-title">Quick Links</span>
-            <button class="add-btn" id="addBtn">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-              >
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-              添加链接
-            </button>
           </div>
           <div class="links-grid" id="linksGrid"></div>
         </div>
@@ -1193,10 +1184,42 @@
         e.stopPropagation();
         bgPanel.classList.toggle("open");
       });
+      document.getElementById("randomFaviconBtn").addEventListener("click", () => {
+        const all = allEmojis();
+        const picked = all[Math.floor(Math.random() * all.length)];
+        let link = document.querySelector("link[rel~='icon']");
+        if (!link) {
+          link = document.createElement("link");
+          link.rel = "icon";
+          document.head.appendChild(link);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = 32;
+        canvas.height = 32;
+        const ctx = canvas.getContext("2d");
+        ctx.font = "28px serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(picked, 16, 16);
+        link.href = canvas.toDataURL();
+      });
       document.addEventListener("click", (e) => {
         if (!e.target.closest(".bg-controls")) bgPanel.classList.remove("open");
       });
       loadSavedBg();
+
+      // Set default favicon to 🎲 emoji
+      (function setDefaultFavicon() {
+        const canvas = document.createElement("canvas");
+        canvas.width = 32;
+        canvas.height = 32;
+        const ctx = canvas.getContext("2d");
+        ctx.font = "28px serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("🎲", 16, 16);
+        document.getElementById("faviconLink").href = canvas.toDataURL();
+      })();
 
       // ── SEARCH
       let engine = "google";
@@ -1363,10 +1386,6 @@
           ? "收起链接"
           : "常用链接";
       });
-      document
-        .getElementById("addBtn")
-        .addEventListener("click", () => openModal());
-
       // ── EMOJI DATA (loaded from server)
       let EMOJI_CATS = { "全部": null };
 
@@ -1430,7 +1449,20 @@
         const picked = all[Math.floor(Math.random() * all.length)];
         selectedEmoji = picked;
         document.getElementById("randomEmojiResult").textContent = picked;
-        buildEmojiUI();
+
+        // Try to update highlight in current view without full rebuild
+        const g = document.getElementById("emojiGrid");
+        const existing = g.querySelector(".emoji-btn.selected");
+        if (existing) existing.classList.remove("selected");
+        const target = Array.from(g.querySelectorAll(".emoji-btn")).find(b => b.textContent === picked);
+        if (target) {
+          target.classList.add("selected");
+          target.scrollIntoView({ block: "nearest" });
+        } else {
+          // Picked emoji not in current category view, switch to 全部
+          activeCat = "全部";
+          buildEmojiUI();
+        }
       });
 
       function allEmojis() {

@@ -1,17 +1,65 @@
 [
   {
-    "id": 1774708997576,
-    "name": "AsciiSignature",
-    "url": "https://www.kammerl.de/ascii/AsciiSignature.php",
-    "icon": "✏️",
+    "id": 1774710373138,
+    "name": "aixj/home",
+    "url": "https://aixj.vip/home",
+    "icon": "👩‍🚀",
     "cat": "",
     "useEmoji": true
   },
   {
-    "id": 1774710373138,
-    "name": "aixj",
-    "url": "https://aixj.vip/home",
-    "icon": "®️",
+    "id": 1774710500001,
+    "name": "GitHub",
+    "url": "https://github.com",
+    "icon": "🐙",
+    "cat": "",
+    "useEmoji": true
+  },
+  {
+    "id": 1774710500002,
+    "name": "ChatGPT",
+    "url": "https://chatgpt.com",
+    "icon": "💬",
+    "cat": "",
+    "useEmoji": true
+  },
+  {
+    "id": 1774710500003,
+    "name": "DeepSeek",
+    "url": "https://www.deepseek.com",
+    "icon": "🐳",
+    "cat": "",
+    "useEmoji": true
+  },
+  {
+    "id": 1774710500004,
+    "name": "哔哩哔哩 (B站)",
+    "url": "https://www.bilibili.com",
+    "icon": "📺",
+    "cat": "",
+    "useEmoji": true
+  },
+  {
+    "id": 1774710500005,
+    "name": "聚合图床 (Superbed)",
+    "url": "https://www.superbed.cn/",
+    "icon": "🖼️",
+    "cat": "",
+    "useEmoji": true
+  },
+  {
+    "id": 1774710500006,
+    "name": "Claude",
+    "url": "https://claude.ai",
+    "icon": "🤖",
+    "cat": "",
+    "useEmoji": true
+  },
+  {
+    "id": 1774710500007,
+    "name": "超星通行证",
+    "url": "https://passport2.chaoxing.com/",
+    "icon": "📚",
     "cat": "",
     "useEmoji": true
   }
