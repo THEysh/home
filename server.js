@@ -250,10 +250,10 @@ app.use((err, req, res, next) => {
   }
   next();
 });
-
+const HOST = '0.0.0.0';
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`Server running at http://${HOST}:${PORT}`); // 👈 修改日志输出
   console.log(`API endpoints:`);
   console.log(`  GET  /api/links`);
   console.log(`  POST /api/links`);

@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   search-home:
-    build: .
+    image: theysh0303/search-home:latest
     container_name: search-home
     ports:
       - "39421:39421"
