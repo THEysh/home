@@ -5,8 +5,8 @@
 
 支持快速搜索、常用链接管理、自定义背景图片上传与实时调整，带来丝滑的使用体验。
 
-![](image_github\image1.png)
-![](image_github\image2.png)
+![](./image_github/image1.png)
+![](./image_github/image2.png)
 
 ## 功能特性
 
