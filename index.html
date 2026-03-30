@@ -41,7 +41,7 @@
         overflow-x: hidden;
       }
 
-      /* ── BACKGROUND ── */
+      /* ---- BACKGROUND ---- */
       #bgImage {
         position: fixed;
         inset: 0;
@@ -49,10 +49,7 @@
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
-        transition:
-          filter 0.4s ease,
-          opacity 0.5s ease,
-          transform 0.4s ease;
+        transition: filter 0.4s ease, opacity 0.5s ease, transform 0.4s ease;
         opacity: 0;
       }
       #bgImage.loaded {
@@ -72,16 +69,8 @@
         z-index: 0;
         pointer-events: none;
         background:
-          radial-gradient(
-            ellipse 80% 60% at 20% 10%,
-            rgba(40, 60, 160, 0.2) 0%,
-            transparent 70%
-          ),
-          radial-gradient(
-            ellipse 60% 50% at 80% 80%,
-            rgba(100, 40, 160, 0.16) 0%,
-            transparent 65%
-          );
+          radial-gradient(ellipse 80% 60% at 20% 10%, rgba(40, 60, 160, 0.2) 0%, transparent 70%),
+          radial-gradient(ellipse 60% 50% at 80% 80%, rgba(100, 40, 160, 0.16) 0%, transparent 65%);
       }
       .stars {
         position: fixed;
@@ -100,18 +89,11 @@
         opacity: 0;
       }
       @keyframes twinkle {
-        0%,
-        100% {
-          opacity: 0;
-          transform: scale(0.5);
-        }
-        50% {
-          opacity: var(--op, 0.7);
-          transform: scale(1);
-        }
+        0%, 100% { opacity: 0; transform: scale(0.5); }
+        50%       { opacity: var(--op, 0.7); transform: scale(1); }
       }
 
-      /* ── BG CONTROLS ── */
+      /* ---- BG CONTROLS ---- */
       .bg-controls {
         position: fixed;
         bottom: 1.4rem;
@@ -124,10 +106,7 @@
       }
       .bg-panel {
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(8, 10, 24, 0.5);
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
@@ -139,35 +118,25 @@
         transition: opacity 0.3s;
         z-index: 100;
       }
-      .bg-panel.open {
-        opacity: 1;
-        pointer-events: all;
-      }
+      .bg-panel.open { opacity: 1; pointer-events: all; }
       .bg-panel-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 1rem;
       }
-      .bg-panel-title {
-        font-size: 1.1rem;
-        color: var(--text-primary);
-      }
+      .bg-panel-title { font-size: 1.1rem; color: var(--text-primary); }
       .bg-panel-close {
-        width: 36px;
-        height: 36px;
+        width: 36px; height: 36px;
         border-radius: 10px;
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255,255,255,0.1);
         border: none;
         color: var(--text-secondary);
         font-size: 1.2rem;
         cursor: pointer;
         transition: all 0.2s;
       }
-      .bg-panel-close:hover {
-        background: rgba(255, 255, 255, 0.2);
-        color: var(--text-primary);
-      }
+      .bg-panel-close:hover { background: rgba(255,255,255,0.2); color: var(--text-primary); }
       .upload-btn {
         width: 100%;
         padding: 0.52rem 0.85rem;
@@ -182,10 +151,7 @@
         transition: all 0.2s;
         display: block;
       }
-      .upload-btn:hover {
-        background: rgba(91, 140, 255, 0.22);
-        border-color: rgba(91, 140, 255, 0.6);
-      }
+      .upload-btn:hover { background: rgba(91, 140, 255, 0.22); border-color: rgba(91, 140, 255, 0.6); }
       .bg-sliders {
         background: rgba(8, 10, 24, 0.8);
         backdrop-filter: blur(12px);
@@ -198,17 +164,8 @@
         gap: 0.6rem;
         min-width: 180px;
       }
-      .slider-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.6rem;
-      }
-      .slider-label {
-        font-size: 0.72rem;
-        color: var(--text-secondary);
-        white-space: nowrap;
-      }
+      .slider-row { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+      .slider-label { font-size: 0.72rem; color: var(--text-secondary); white-space: nowrap; }
       .delete-current-btn {
         width: 100%;
         padding: 0.4rem 0.8rem;
@@ -222,31 +179,24 @@
         transition: all 0.2s;
         margin-top: 0.5rem;
       }
-      .delete-current-btn:hover {
-        background: rgba(255, 91, 106, 0.22);
-      }
+      .delete-current-btn:hover { background: rgba(255, 91, 106, 0.22); }
       .bg-image-list {
         max-height: calc(100vh - 260px);
         overflow-y: auto;
-        display: flex;          /* 三列并排 */
+        display: flex;
         gap: 12px;
         padding: 10px 0;
-        align-items: flex-start; /* 每列从顶部开始堆叠，不拉伸 */
+        align-items: flex-start;
       }
       .masonry-col {
         flex: 1;
         display: flex;
-        flex-direction: column; /* 列内图片纵向堆叠 */
+        flex-direction: column;
         gap: 12px;
         min-width: 0;
       }
-      .bg-image-list::-webkit-scrollbar {
-        width: 6px;
-      }
-      .bg-image-list::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 3px;
-      }
+      .bg-image-list::-webkit-scrollbar { width: 6px; }
+      .bg-image-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
       .bg-image-item {
         position: relative;
         border-radius: 12px;
@@ -255,46 +205,28 @@
         border: 3px solid transparent;
         transition: border-color 0.2s, box-shadow 0.2s;
       }
-      .bg-image-item:hover {
-        border-color: rgba(91, 140, 255, 0.5);
-        box-shadow: 0 0 12px rgba(91, 140, 255, 0.3);
-      }
-      .bg-image-item.active {
-        border-color: var(--accent);
-        box-shadow: 0 0 15px rgba(91, 140, 255, 0.5);
-      }
+      .bg-image-item:hover { border-color: rgba(91,140,255,0.5); box-shadow: 0 0 12px rgba(91,140,255,0.3); }
+      .bg-image-item.active { border-color: var(--accent); box-shadow: 0 0 15px rgba(91,140,255,0.5); }
       .bg-image-item img {
         width: 100%;
-        height: auto;                 /* ← 保持原始比例 */
+        height: auto;
         display: block;
+        transition: opacity 0.45s ease;
+        opacity: 1;
       }
-      .bg-no-images {
-        text-align: center;
-        color: var(--text-secondary);
-        font-size: 0.85rem;
-        padding: 2rem 0;
-      }
+      .bg-no-images { text-align: center; color: var(--text-secondary); font-size: 0.85rem; padding: 2rem 0; }
+
       /* Custom Confirm Modal */
       .custom-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.7);
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.7);
         backdrop-filter: blur(4px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: flex; align-items: center; justify-content: center;
         z-index: 1000;
-        opacity: 0;
-        visibility: hidden;
+        opacity: 0; visibility: hidden;
         transition: opacity 0.2s, visibility 0.2s;
       }
-      .custom-modal-overlay.show {
-        opacity: 1;
-        visibility: visible;
-      }
+      .custom-modal-overlay.show { opacity: 1; visibility: visible; }
       .custom-modal {
         background: rgba(15, 18, 40, 0.95);
         backdrop-filter: blur(20px);
@@ -306,26 +238,10 @@
         transform: scale(0.9) translateY(-10px);
         transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       }
-      .custom-modal-overlay.show .custom-modal {
-        transform: scale(1) translateY(0);
-      }
-      .custom-modal-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.75rem;
-      }
-      .custom-modal-message {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        margin-bottom: 1.25rem;
-        line-height: 1.5;
-      }
-      .custom-modal-actions {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: flex-end;
-      }
+      .custom-modal-overlay.show .custom-modal { transform: scale(1) translateY(0); }
+      .custom-modal-title { font-size: 1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.75rem; }
+      .custom-modal-message { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.5; }
+      .custom-modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
       .custom-modal-btn {
         padding: 0.5rem 1.25rem;
         border-radius: 8px;
@@ -335,95 +251,62 @@
         transition: all 0.2s;
         border: none;
       }
-      .custom-modal-btn.cancel {
-        background: rgba(255, 255, 255, 0.1);
-        color: var(--text-secondary);
-      }
-      .custom-modal-btn.cancel:hover {
-        background: rgba(255, 255, 255, 0.18);
-        color: var(--text-primary);
-      }
-      .custom-modal-btn.confirm {
-        background: rgba(255, 91, 106, 0.2);
-        color: #ff6b7a;
-        border: 1px solid rgba(255, 91, 106, 0.4);
-      }
-      .custom-modal-btn.confirm:hover {
-        background: rgba(255, 91, 106, 0.3);
-      }
-      .custom-modal-btn.alert {
-        background: rgba(91, 140, 255, 0.2);
-        color: #8ab4ff;
-        border: 1px solid rgba(91, 140, 255, 0.4);
-      }
-      .custom-modal-btn.alert:hover {
-        background: rgba(91, 140, 255, 0.3);
-      }
+      .custom-modal-btn.cancel { background: rgba(255,255,255,0.1); color: var(--text-secondary); }
+      .custom-modal-btn.cancel:hover { background: rgba(255,255,255,0.18); color: var(--text-primary); }
+      .custom-modal-btn.confirm { background: rgba(255,91,106,0.2); color: #ff6b7a; border: 1px solid rgba(255,91,106,0.4); }
+      .custom-modal-btn.confirm:hover { background: rgba(255,91,106,0.3); }
+      .custom-modal-btn.alert { background: rgba(91,140,255,0.2); color: #8ab4ff; border: 1px solid rgba(91,140,255,0.4); }
+      .custom-modal-btn.alert:hover { background: rgba(91,140,255,0.3); }
+
       .blur-slider {
         -webkit-appearance: none;
-        width: 95px;
-        height: 4px;
+        width: 95px; height: 4px;
         border-radius: 2px;
-        background: rgba(255, 255, 255, 0.12);
+        background: rgba(255,255,255,0.12);
         outline: none;
         cursor: pointer;
       }
       .blur-slider::-webkit-slider-thumb {
         -webkit-appearance: none;
-        width: 14px;
-        height: 14px;
+        width: 14px; height: 14px;
         border-radius: 50%;
         background: var(--accent);
-        box-shadow: 0 0 6px rgba(91, 140, 255, 0.5);
+        box-shadow: 0 0 6px rgba(91,140,255,0.5);
         cursor: pointer;
       }
-      .button-group {
-        display: flex;           /* 关键：让两个按钮在一行显示 */
-        gap: 8px;                /* 按钮之间的间距 */
-        /* align-items: center; */   /* 如果需要垂直居中可以加上 */
-      }
+      .button-group { display: flex; gap: 8px; }
       .bg-toggle-btn {
-        width: 38px;
-        height: 38px;
+        width: 38px; height: 38px;
         border-radius: 11px;
         background: rgba(8, 10, 24, 0.75);
         backdrop-filter: blur(12px);
         border: 1px solid var(--border);
         color: var(--text-secondary);
         cursor: pointer;
-        display: flex;           /* 让按钮在一行显示 */
-        gap: 8px;                /* 按钮之间的间距 */
+        display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.2s;
         font-size: 1.05rem;
       }
-      .bg-toggle-btn:hover {
-        color: var(--text-primary);
-        border-color: rgba(255, 255, 255, 0.2);
-      }
+      .bg-toggle-btn:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.2); }
 
-      /* ── LAYOUT ── */
+      /* ---- LAYOUT ---- */
       .page {
-        position: relative;
-        z-index: 1;
+        position: relative; z-index: 1;
         min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
         padding: 2rem 1.5rem 5rem;
       }
 
-      /* ── SEARCH ── */
+      /* ---- SEARCH ---- */
       .search-container {
-        width: 100%;
-        max-width: 660px;
+        width: 100%; max-width: 660px;
         animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
       }
       .search-engine-tabs {
-        display: flex;
-        gap: 0.5rem;
+        display: flex; gap: 0.5rem;
         margin-bottom: 0.75rem;
         justify-content: center;
       }
@@ -439,33 +322,19 @@
         transition: all 0.2s;
         backdrop-filter: blur(8px);
       }
-      .engine-tab:hover {
-        color: var(--text-primary);
-        border-color: rgba(255, 255, 255, 0.18);
-      }
-      .engine-tab.active {
-        background: rgba(91, 140, 255, 0.18);
-        border-color: var(--border-focus);
-        color: #a8c4ff;
-      }
-      .search-wrap {
-        position: relative;
-        display: flex;
-        align-items: center;
-      }
+      .engine-tab:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.18); }
+      .engine-tab.active { background: rgba(91,140,255,0.18); border-color: var(--border-focus); color: #a8c4ff; }
+      .search-wrap { position: relative; display: flex; align-items: center; }
       .search-icon {
-        position: absolute;
-        left: 1.2rem;
+        position: absolute; left: 1.2rem;
         color: var(--text-secondary);
-        width: 18px;
-        height: 18px;
-        pointer-events: none;
-        flex-shrink: 0;
+        width: 18px; height: 18px;
+        pointer-events: none; flex-shrink: 0;
       }
       .search-input {
         width: 100%;
         padding: 1.05rem 4.5rem 1.05rem 3.2rem;
-        background: rgba(255, 255, 255, 0.07);
+        background: rgba(255,255,255,0.07);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         border: 1px solid var(--border);
@@ -474,65 +343,38 @@
         font-size: 1rem;
         font-family: "DM Sans", sans-serif;
         outline: none;
-        transition:
-          border-color 0.25s,
-          box-shadow 0.25s,
-          background 0.25s;
+        transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
       }
-      .search-input::placeholder {
-        color: var(--text-secondary);
-      }
+      .search-input::placeholder { color: var(--text-secondary); }
       .search-input:focus {
         border-color: var(--border-focus);
-        background: rgba(255, 255, 255, 0.09);
-        box-shadow:
-          0 0 0 3px rgba(91, 140, 255, 0.13),
-          0 8px 40px rgba(0, 0, 0, 0.4);
+        background: rgba(255,255,255,0.09);
+        box-shadow: 0 0 0 3px rgba(91,140,255,0.13), 0 8px 40px rgba(0,0,0,0.4);
       }
       .search-btn {
-        position: absolute;
-        right: 0.6rem;
-        width: 2.4rem;
-        height: 2.4rem;
+        position: absolute; right: 0.6rem;
+        width: 2.4rem; height: 2.4rem;
         border-radius: 11px;
         background: linear-gradient(135deg, var(--accent), var(--accent2));
-        border: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition:
-          transform 0.18s,
-          box-shadow 0.18s;
-        box-shadow: 0 2px 14px rgba(91, 140, 255, 0.4);
+        border: none; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: transform 0.18s, box-shadow 0.18s;
+        box-shadow: 0 2px 14px rgba(91,140,255,0.4);
       }
-      .search-btn:hover {
-        transform: scale(1.07);
-        box-shadow: 0 4px 22px rgba(91, 140, 255, 0.55);
-      }
-      .search-btn:active {
-        transform: scale(0.96);
-      }
-      .search-btn svg {
-        color: #fff;
-        width: 15px;
-        height: 15px;
-      }
+      .search-btn:hover { transform: scale(1.07); box-shadow: 0 4px 22px rgba(91,140,255,0.55); }
+      .search-btn:active { transform: scale(0.96); }
+      .search-btn svg { color: #fff; width: 15px; height: 15px; }
 
-      /* ── LINKS SECTION ── */
+      /* ---- LINKS SECTION ---- */
       .links-section {
-        width: 100%;
-        max-width: 900px;
+        width: 100%; max-width: 900px;
         margin-top: 2.5rem;
         animation: fadeUp 0.9s 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
       }
       .links-toggle {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
+        display: flex; align-items: center; gap: 0.6rem;
         cursor: pointer;
-        width: fit-content;
-        margin: 0 auto;
+        width: fit-content; margin: 0 auto;
         padding: 0.55rem 1.1rem;
         border-radius: 99px;
         border: 1px solid var(--border);
@@ -544,86 +386,35 @@
         backdrop-filter: blur(12px);
         user-select: none;
       }
-      .links-toggle:hover {
-        color: var(--text-primary);
-        border-color: rgba(255, 255, 255, 0.18);
-        background: var(--surface-hover);
-      }
-      .links-toggle .toggle-icon {
-        width: 14px;
-        height: 14px;
-        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-        flex-shrink: 0;
-      }
-      .links-toggle.open .toggle-icon {
-        transform: rotate(180deg);
-      }
-      .links-toggle .dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: var(--accent);
-        opacity: 0.7;
-      }
-
+      .links-toggle:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.18); background: var(--surface-hover); }
+      .links-toggle .toggle-icon { width: 14px; height: 14px; transition: transform 0.35s cubic-bezier(0.16,1,0.3,1); flex-shrink: 0; }
+      .links-toggle.open .toggle-icon { transform: rotate(180deg); }
+      .links-toggle .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); opacity: 0.7; }
       .links-grid-wrap {
-        overflow: hidden;
-        max-height: 0;
-        transition:
-          max-height 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-          opacity 0.35s ease,
-          margin 0.35s ease;
-        opacity: 0;
-        margin-top: 0;
+        overflow: hidden; max-height: 0;
+        transition: max-height 0.6s cubic-bezier(0.16,1,0.3,1), opacity 0.35s ease, margin 0.35s ease;
+        opacity: 0; margin-top: 0;
       }
-      .links-grid-wrap.open {
-        max-height: 2000px;
-        opacity: 1;
-        margin-top: 1.4rem;
-      }
-
-      .links-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1rem;
-      }
-      .links-title {
-        font-family: "Syne", sans-serif;
-        font-size: 0.75rem;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-        color: var(--text-secondary);
-      }
+      .links-grid-wrap.open { max-height: 2000px; opacity: 1; margin-top: 1.4rem; }
+      .links-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+      .links-title { font-family: "Syne", sans-serif; font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-secondary); }
       .add-btn {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
+        display: flex; align-items: center; gap: 0.4rem;
         padding: 0.38rem 0.85rem;
         border-radius: 99px;
-        background: rgba(91, 140, 255, 0.14);
-        border: 1px solid rgba(91, 140, 255, 0.3);
+        background: rgba(91,140,255,0.14);
+        border: 1px solid rgba(91,140,255,0.3);
         color: #a8c4ff;
         font-size: 0.78rem;
         font-family: "DM Sans", sans-serif;
         cursor: pointer;
         transition: all 0.2s;
       }
-      .add-btn:hover {
-        background: rgba(91, 140, 255, 0.24);
-        border-color: rgba(91, 140, 255, 0.5);
-      }
-      .add-btn svg {
-        width: 12px;
-        height: 12px;
-      }
-      .links-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-        gap: 0.8rem;
-      }
+      .add-btn:hover { background: rgba(91,140,255,0.24); border-color: rgba(91,140,255,0.5); }
+      .add-btn svg { width: 12px; height: 12px; }
+      .links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.8rem; }
 
-      /* ── LINK CARD ── */
+      /* ---- LINK CARD ---- */
       .link-card {
         position: relative;
         background: var(--surface);
@@ -633,370 +424,151 @@
         border-radius: 16px;
         padding: 1rem 0.85rem 0.85rem;
         cursor: pointer;
-        transition:
-          transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-          background 0.2s,
-          border-color 0.2s,
-          box-shadow 0.2s;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-        animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+        transition: transform 0.22s cubic-bezier(0.16,1,0.3,1), background 0.2s, border-color 0.2s, box-shadow 0.2s;
+        display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+        animation: cardIn 0.4s cubic-bezier(0.16,1,0.3,1) both;
         user-select: none;
       }
       @keyframes cardIn {
-        from {
-          opacity: 0;
-          transform: scale(0.88) translateY(8px);
-        }
-        to {
-          opacity: 1;
-          transform: scale(1) translateY(0);
-        }
+        from { opacity: 0; transform: scale(0.88) translateY(8px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
       }
       .link-card:hover {
         transform: translateY(-3px) scale(1.03);
         background: var(--surface-hover);
-        border-color: rgba(255, 255, 255, 0.15);
-        box-shadow:
-          0 8px 30px rgba(0, 0, 0, 0.35),
-          0 0 0 1px rgba(91, 140, 255, 0.1);
+        border-color: rgba(255,255,255,0.15);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.35), 0 0 0 1px rgba(91,140,255,0.1);
       }
-      .link-card:active {
-        transform: scale(0.97);
-      }
-      .card-actions {
-        position: absolute;
-        top: 0.45rem;
-        right: 0.45rem;
-        display: flex;
-        gap: 0.3rem;
-        opacity: 0;
-        transition: opacity 0.18s;
-      }
-      .link-card:hover .card-actions {
-        opacity: 1;
-      }
+      .link-card:active { transform: scale(0.97); }
+      .card-actions { position: absolute; top: 0.45rem; right: 0.45rem; display: flex; gap: 0.3rem; opacity: 0; transition: opacity 0.18s; }
+      .link-card:hover .card-actions { opacity: 1; }
       .card-action-btn {
-        width: 22px;
-        height: 22px;
+        width: 22px; height: 22px;
         border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        border: none; cursor: pointer;
         transition: background 0.15s;
         font-size: 0.65rem;
       }
-      .card-action-btn.edit {
-        background: rgba(91, 140, 255, 0.25);
-        color: #a8c4ff;
-      }
-      .card-action-btn.edit:hover {
-        background: rgba(91, 140, 255, 0.45);
-      }
-      .card-action-btn.del {
-        background: rgba(255, 91, 106, 0.2);
-        color: #ff8f9a;
-      }
-      .card-action-btn.del:hover {
-        background: rgba(255, 91, 106, 0.4);
-      }
+      .card-action-btn.edit { background: rgba(91,140,255,0.25); color: #a8c4ff; }
+      .card-action-btn.edit:hover { background: rgba(91,140,255,0.45); }
+      .card-action-btn.del  { background: rgba(255,91,106,0.2); color: #ff8f9a; }
+      .card-action-btn.del:hover { background: rgba(255,91,106,0.4); }
       .card-favicon {
-        width: 36px;
-        height: 36px;
+        width: 36px; height: 36px;
         border-radius: 10px;
-        background: rgba(255, 255, 255, 0.07);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-        overflow: hidden;
-        border: 1px solid var(--border);
-        flex-shrink: 0;
+        background: rgba(255,255,255,0.07);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; overflow: hidden;
+        border: 1px solid var(--border); flex-shrink: 0;
       }
-      .card-favicon img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-      .card-name {
-        font-size: 0.78rem;
-        font-weight: 500;
-        color: var(--text-primary);
-        text-align: center;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        width: 100%;
-      }
-      .card-url {
-        font-size: 0.62rem;
-        color: var(--text-secondary);
-        text-align: center;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        width: 100%;
-      }
-      .card-cat {
-        font-size: 0.58rem;
-        padding: 0.12rem 0.42rem;
-        border-radius: 99px;
-        background: rgba(91, 140, 255, 0.13);
-        color: rgba(168, 196, 255, 0.7);
-        border: 1px solid rgba(91, 140, 255, 0.2);
-        white-space: nowrap;
-      }
+      .card-favicon img { width: 100%; height: 100%; object-fit: cover; }
+      .card-name { font-size: 0.78rem; font-weight: 500; color: var(--text-primary); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+      .card-url  { font-size: 0.62rem; color: var(--text-secondary); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+      .card-cat  { font-size: 0.58rem; padding: 0.12rem 0.42rem; border-radius: 99px; background: rgba(91,140,255,0.13); color: rgba(168,196,255,0.7); border: 1px solid rgba(91,140,255,0.2); white-space: nowrap; }
       .link-card.add-placeholder {
-        border-style: dashed;
-        border-color: rgba(255, 255, 255, 0.1);
-        color: var(--text-secondary);
-        background: transparent;
-        justify-content: center;
-        min-height: 98px;
-        gap: 0.35rem;
+        border-style: dashed; border-color: rgba(255,255,255,0.1);
+        color: var(--text-secondary); background: transparent;
+        justify-content: center; min-height: 98px; gap: 0.35rem;
       }
-      .link-card.add-placeholder:hover {
-        border-color: rgba(91, 140, 255, 0.35);
-        color: #8ab4ff;
-        background: rgba(91, 140, 255, 0.05);
-        box-shadow: none;
-        transform: translateY(-2px);
-      }
-      .add-placeholder-icon {
-        font-size: 1.25rem;
-        opacity: 0.45;
-      }
-      .add-placeholder-text {
-        font-size: 0.72rem;
-      }
+      .link-card.add-placeholder:hover { border-color: rgba(91,140,255,0.35); color: #8ab4ff; background: rgba(91,140,255,0.05); box-shadow: none; transform: translateY(-2px); }
+      .add-placeholder-icon { font-size: 1.25rem; opacity: 0.45; }
+      .add-placeholder-text { font-size: 0.72rem; }
 
-      /* ── MODAL ── */
+      /* ---- MODAL ---- */
       .modal-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 100;
-        background: rgba(0, 0, 0, 0.65);
+        position: fixed; inset: 0; z-index: 100;
+        background: rgba(0,0,0,0.65);
         backdrop-filter: blur(8px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        pointer-events: none;
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; pointer-events: none;
         transition: opacity 0.25s;
       }
-      .modal-overlay.open {
-        opacity: 1;
-        pointer-events: all;
-      }
+      .modal-overlay.open { opacity: 1; pointer-events: all; }
       .modal {
         background: #0c0e1e;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255,255,255,0.1);
         border-radius: 22px;
         padding: 1.8rem;
-        width: 100%;
-        max-width: 440px;
-        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+        width: 100%; max-width: 440px;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.7);
         transform: scale(0.92) translateY(12px);
-        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        max-height: 90vh;
-        overflow-y: auto;
+        transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+        max-height: 90vh; overflow-y: auto;
       }
-      .modal-overlay.open .modal {
-        transform: scale(1) translateY(0);
-      }
-      .modal-title {
-        font-family: "Syne", sans-serif;
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 1.3rem;
-      }
-      .modal-field {
-        margin-bottom: 0.9rem;
-      }
-      .modal-label {
-        display: block;
-        font-size: 0.72rem;
-        font-weight: 500;
-        color: var(--text-secondary);
-        margin-bottom: 0.38rem;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-      }
+      .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+      .modal-title { font-family: "Syne", sans-serif; font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.3rem; }
+      .modal-field { margin-bottom: 0.9rem; }
+      .modal-label { display: block; font-size: 0.72rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.38rem; letter-spacing: 0.05em; text-transform: uppercase; }
       .modal-input {
-        width: 100%;
-        padding: 0.6rem 0.9rem;
-        background: rgba(255, 255, 255, 0.06);
+        width: 100%; padding: 0.6rem 0.9rem;
+        background: rgba(255,255,255,0.06);
         border: 1px solid var(--border);
         border-radius: 10px;
         color: var(--text-primary);
-        font-size: 0.9rem;
-        font-family: "DM Sans", sans-serif;
+        font-size: 0.9rem; font-family: "DM Sans", sans-serif;
         outline: none;
-        transition:
-          border-color 0.2s,
-          box-shadow 0.2s;
+        transition: border-color 0.2s, box-shadow 0.2s;
       }
-      .modal-input:focus {
-        border-color: var(--border-focus);
-        box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.1);
-      }
-      .modal-input::placeholder {
-        color: rgba(200, 210, 240, 0.25);
-      }
+      .modal-input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(91,140,255,0.1); }
+      .modal-input::placeholder { color: rgba(200,210,240,0.25); }
 
       /* emoji picker */
-      .emoji-cats {
-        display: flex;
-        gap: 0.35rem;
-        flex-wrap: wrap;
-        margin-bottom: 0.65rem;
-      }
+      .emoji-cats { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.65rem; }
       .emoji-cat-btn {
         padding: 0.2rem 0.58rem;
         border-radius: 99px;
         background: var(--surface);
         border: 1px solid var(--border);
         color: var(--text-secondary);
-        font-size: 0.68rem;
-        font-family: "DM Sans", sans-serif;
-        cursor: pointer;
-        transition: all 0.15s;
+        font-size: 0.68rem; font-family: "DM Sans", sans-serif;
+        cursor: pointer; transition: all 0.15s;
       }
-      .emoji-cat-btn.active,
-      .emoji-cat-btn:hover {
-        background: rgba(91, 140, 255, 0.18);
-        border-color: rgba(91, 140, 255, 0.42);
-        color: #a8c4ff;
-      }
-      .emoji-grid {
-        display: grid;
-        grid-template-columns: repeat(8, 1fr);
-        gap: 0.35rem;
-        max-height: 150px;
-        overflow-y: auto;
-        padding-right: 2px;
-      }
-      .emoji-grid::-webkit-scrollbar {
-        width: 4px;
-      }
-      .emoji-grid::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 2px;
-      }
+      .emoji-cat-btn.active, .emoji-cat-btn:hover { background: rgba(91,140,255,0.18); border-color: rgba(91,140,255,0.42); color: #a8c4ff; }
+      .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.35rem; max-height: 150px; overflow-y: auto; padding-right: 2px; }
+      .emoji-grid::-webkit-scrollbar { width: 4px; }
+      .emoji-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
       .emoji-btn {
-        width: 32px;
-        height: 32px;
+        width: 32px; height: 32px;
         border-radius: 8px;
         background: var(--surface);
         border: 1px solid var(--border);
-        cursor: pointer;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.15s;
-        padding: 0;
+        cursor: pointer; font-size: 1rem;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.15s; padding: 0;
       }
-      .emoji-btn:hover {
-        background: rgba(91, 140, 255, 0.2);
-        border-color: rgba(91, 140, 255, 0.4);
-        transform: scale(1.1);
-      }
-      .emoji-btn.selected {
-        background: rgba(91, 140, 255, 0.3);
-        border-color: rgba(91, 140, 255, 0.65);
-        transform: scale(1.1);
-        box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.22);
-      }
-      .tab-emoji {
-        display: inline-block;
-        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s;
-      }
-      .modal-actions {
-        display: flex;
-        gap: 0.6rem;
-        margin-top: 1.3rem;
-      }
-      .modal-btn {
-        flex: 1;
-        padding: 0.65rem;
-        border-radius: 10px;
-        border: none;
-        font-size: 0.88rem;
-        font-family: "DM Sans", sans-serif;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.18s;
-      }
-      .modal-btn.cancel {
-        background: var(--surface);
-        color: var(--text-secondary);
-        border: 1px solid var(--border);
-      }
-      .modal-btn.cancel:hover {
-        background: var(--surface-hover);
-        color: var(--text-primary);
-      }
-      .modal-btn.confirm {
-        background: linear-gradient(135deg, var(--accent), var(--accent2));
-        color: #fff;
-        box-shadow: 0 2px 12px rgba(91, 140, 255, 0.35);
-      }
-      .modal-btn.confirm:hover {
-        box-shadow: 0 4px 20px rgba(91, 140, 255, 0.5);
-        transform: translateY(-1px);
-      }
+      .emoji-btn:hover { background: rgba(91,140,255,0.2); border-color: rgba(91,140,255,0.4); transform: scale(1.1); }
+      .emoji-btn.selected { background: rgba(91,140,255,0.3); border-color: rgba(91,140,255,0.65); transform: scale(1.1); box-shadow: 0 0 0 2px rgba(91,140,255,0.22); }
+      .tab-emoji { display: inline-block; transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), opacity 0.2s; }
+      .modal-actions { display: flex; gap: 0.6rem; margin-top: 1.3rem; }
+      .modal-btn { flex: 1; padding: 0.65rem; border-radius: 10px; border: none; font-size: 0.88rem; font-family: "DM Sans", sans-serif; font-weight: 500; cursor: pointer; transition: all 0.18s; }
+      .modal-btn.cancel { background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); }
+      .modal-btn.cancel:hover { background: var(--surface-hover); color: var(--text-primary); }
+      .modal-btn.confirm { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; box-shadow: 0 2px 12px rgba(91,140,255,0.35); }
+      .modal-btn.confirm:hover { box-shadow: 0 4px 20px rgba(91,140,255,0.5); transform: translateY(-1px); }
 
       @keyframes fadeUp {
-        from {
-          opacity: 0;
-          transform: translateY(22px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(22px); }
+        to   { opacity: 1; transform: translateY(0); }
       }
       @keyframes cardOut {
-        to {
-          opacity: 0;
-          transform: scale(var(--scale, 0.85)) translateY(6px);
-        }
+        to { opacity: 0; transform: scale(var(--scale, 0.85)) translateY(6px); }
       }
-      ::-webkit-scrollbar {
-        width: 6px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 3px;
-      }
-      .icon-source-toggle {
-        display: flex;
-        gap: 0.4rem;
-      }
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+      .icon-source-toggle { display: flex; gap: 0.4rem; }
       .icon-source-btn {
         padding: 0.3rem 0.85rem;
         border-radius: 6px;
         border: 1px solid var(--border);
         background: transparent;
         color: var(--text-secondary);
-        cursor: pointer;
-        font-size: 0.75rem;
+        cursor: pointer; font-size: 0.75rem;
         transition: background 0.15s, color 0.15s, border-color 0.15s;
       }
-      .icon-source-btn.active {
-        background: rgba(91, 140, 255, 0.18);
-        color: #8ab4ff;
-        border-color: rgba(91, 140, 255, 0.4);
-      }
+      .icon-source-btn.active { background: rgba(91,140,255,0.18); color: #8ab4ff; border-color: rgba(91,140,255,0.4); }
       .random-emoji-btn {
         margin-top: 0.5rem;
         padding: 0.3rem 0.85rem;
@@ -1004,24 +576,12 @@
         border: 1px solid var(--border);
         background: transparent;
         color: var(--text-secondary);
-        cursor: pointer;
-        font-size: 0.75rem;
+        cursor: pointer; font-size: 0.75rem;
         transition: background 0.15s, color 0.15s, border-color 0.15s;
       }
-      .random-emoji-btn:hover {
-        background: rgba(91, 140, 255, 0.18);
-        color: #8ab4ff;
-        border-color: rgba(91, 140, 255, 0.4);
-      }
-      .random-emoji-row {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-      }
-      .random-emoji-result {
-        font-size: 1.5rem;
-        line-height: 1;
-      }
+      .random-emoji-btn:hover { background: rgba(91,140,255,0.18); color: #8ab4ff; border-color: rgba(91,140,255,0.4); }
+      .random-emoji-row { display: flex; align-items: center; gap: 0.75rem; }
+      .random-emoji-result { font-size: 1.5rem; line-height: 1; }
     </style>
   </head>
   <body>
@@ -1032,91 +592,58 @@
 
     <!-- BG CONTROLS -->
     <div class="bg-controls">
-
-
-      <!-- 全屏背景管理面板 -->
+      <!-- 背景管理面板 -->
       <div class="bg-panel" id="bgPanel">
         <div class="bg-panel-header">
           <span class="bg-panel-title">背景图片管理</span>
           <button class="bg-panel-close" id="bgPanelClose">✕</button>
         </div>
         <label class="upload-btn" for="bgFileInput">
-          🖼 上传背景图片
-          <input
-            type="file"
-            id="bgFileInput"
-            accept="image/*"
-            style="display: none"
-          />
+          📁 上传本地图片
+          <input type="file" id="bgFileInput" accept="image/*" style="display:none" />
         </label>
         <div class="bg-image-list" id="bgImageList"></div>
-        <button class="delete-current-btn" id="deleteCurrentBgBtn">🗑 删除选中图片</button>
+        <button class="delete-current-btn" id="deleteCurrentBgBtn">🗑️ 删除选中图片</button>
       </div>
-      
-            <!-- 其他按钮 -->
+
+      <!-- 控制按钮 -->
       <div class="button-group">
-        <button class="bg-toggle-btn" id="bgToggleBtn" title="背景设置">🎨</button>
-        <button class="bg-toggle-btn" id="randomFaviconBtn" title="随机网页图标">🎲</button>
+        <button class="bg-toggle-btn" id="bgToggleBtn" title="管理背景">🖼️</button>
+        <button class="bg-toggle-btn" id="randomFaviconBtn" title="随机页面图标">🎲</button>
       </div>
-            <!-- 滑块控制面板 -->
+      <!-- 模糊/亮度滑块 -->
       <div class="bg-sliders">
         <div class="slider-row">
-          <span class="slider-label">高斯模糊</span>
-          <input
-            type="range"
-            class="blur-slider"
-            id="blurSlider"
-            min="0"
-            max="40"
-            value="18"
-          />
+          <span class="slider-label">模糊程度</span>
+          <input type="range" class="blur-slider" id="blurSlider" min="0" max="40" value="18" />
         </div>
         <div class="slider-row">
-          <span class="slider-label">暗度叠层</span>
-          <input
-            type="range"
-            class="blur-slider"
-            id="dimSlider"
-            min="0"
-            max="85"
-            value="52"
-          />
+          <span class="slider-label">亮度调节</span>
+          <input type="range" class="blur-slider" id="dimSlider" min="0" max="85" value="52" />
         </div>
       </div>
     </div>
 
     <main class="page">
       <div class="search-container">
-      <div class="search-engine-tabs">
-        <span class="engine-side-icons" data-side="left">
-          <span class="tab-emoji">☁️</span>
-          <span class="tab-emoji">😀</span>
-          <span class="tab-emoji">🚀</span>
-          <span class="tab-emoji">📥</span>
-          <span class="tab-emoji">🚔</span>
-          <span class="tab-emoji">🤽</span>
-        </span>
-
-        <button class="engine-tab" data-engine="bing">Bing</button>
-        <button class="engine-tab active" data-engine="google">Google</button>
-
-        <span class="engine-side-icons" data-side="right">
-          <span class="tab-emoji">🌈</span>
-          <span class="tab-emoji">🎯</span>
-          <span class="tab-emoji">🔥</span>
-          <span class="tab-emoji">⛈️</span>
-          <span class="tab-emoji">📝</span>
-          <span class="tab-emoji">🍜</span>
-        </span>
-      </div>
-            <div class="search-wrap">
-          <svg
-            class="search-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
+        <div class="search-engine-tabs">
+          <span class="engine-side-icons" data-side="left">
+            <span class="tab-emoji">🌙</span>
+            <span class="tab-emoji">🌸</span>
+            <span class="tab-emoji">🎯</span>
+            <span class="tab-emoji">💫</span>
+          </span>
+          <button class="engine-tab" data-engine="bing">Bing</button>
+          <button class="engine-tab active" data-engine="google">Google</button>
+          <span class="engine-side-icons" data-side="right">
+            <span class="tab-emoji">🌊</span>
+            <span class="tab-emoji">🎨</span>
+            <span class="tab-emoji">🚀</span>
+            <span class="tab-emoji">💎</span>
+          </span>
+        </div>
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.35-4.35" />
           </svg>
@@ -1124,17 +651,12 @@
             class="search-input"
             id="searchInput"
             type="text"
-            placeholder="搜索任何内容…"
+            placeholder="搜索任何内容..."
             autocomplete="off"
             spellcheck="false"
           />
           <button class="search-btn" id="searchBtn">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-            >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </button>
@@ -1144,14 +666,8 @@
       <div class="links-section">
         <button class="links-toggle" id="linksToggle">
           <span class="dot"></span>
-          <span id="toggleLabel">常用链接</span>
-          <svg
-            class="toggle-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
+          <span id="toggleLabel">显示快捷链接</span>
+          <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
@@ -1170,21 +686,11 @@
         <div class="modal-title" id="modalTitle">添加链接</div>
         <div class="modal-field">
           <label class="modal-label" for="inputName">名称</label>
-          <input
-            class="modal-input"
-            id="inputName"
-            type="text"
-            placeholder="例：GitHub"
-          />
+          <input class="modal-input" id="inputName" type="text" placeholder="例如 GitHub" />
         </div>
         <div class="modal-field">
           <label class="modal-label" for="inputUrl">URL</label>
-          <input
-            class="modal-input"
-            id="inputUrl"
-            type="url"
-            placeholder="https://..."
-          />
+          <input class="modal-input" id="inputUrl" type="url" placeholder="https://..." />
         </div>
         <div class="modal-field">
           <label class="modal-label">图标来源</label>
@@ -1206,12 +712,7 @@
         </div>
         <div class="modal-field">
           <label class="modal-label" for="inputCat">分类标签（可选）</label>
-          <input
-            class="modal-input"
-            id="inputCat"
-            type="text"
-            placeholder="例：工具、社交、新闻"
-          />
+          <input class="modal-input" id="inputCat" type="text" placeholder="例如工具、社交、娱乐" />
         </div>
         <div class="modal-actions">
           <button class="modal-btn cancel" id="modalCancel">取消</button>
@@ -1221,30 +722,28 @@
     </div>
 
     <script>
-      // ── STARS
+      // ---- STARS ----
       (function () {
         const c = document.getElementById("stars");
         for (let i = 0; i < 100; i++) {
           const s = document.createElement("div");
           s.className = "star";
           const sz = Math.random() * 2 + 0.5;
-          s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random() * 100}%;left:${Math.random() * 100}%;--d:${2 + Math.random() * 4}s;--delay:${Math.random() * 5}s;--op:${0.3 + Math.random() * 0.6}`;
+          s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;--delay:${Math.random()*5}s;--op:${0.3+Math.random()*0.6}`;
           c.appendChild(s);
         }
       })();
 
-      // ── BACKGROUND IMAGE
-      const bgEl = document.getElementById("bgImage");
+      // ---- BACKGROUND IMAGE ----
+      const bgEl        = document.getElementById("bgImage");
       const bgOverlayEl = document.getElementById("bgOverlay");
-      const starsEl = document.getElementById("stars");
-      const blurSlider = document.getElementById("blurSlider");
-      const dimSlider = document.getElementById("dimSlider");
-      const bgPanel = document.getElementById("bgPanel");
-      const bgToggle = document.getElementById("bgToggleBtn");
+      const starsEl     = document.getElementById("stars");
+      const blurSlider  = document.getElementById("blurSlider");
+      const dimSlider   = document.getElementById("dimSlider");
+      const bgPanel     = document.getElementById("bgPanel");
+      const bgToggle    = document.getElementById("bgToggleBtn");
 
-      let bgBlur = 18,
-        bgDim = 52,
-        selectedBgFilename = '';
+      let bgBlur = 18, bgDim = 52, selectedBgFilename = '', currentBgFilename = '';
 
       function applyBg() {
         bgEl.style.filter = `blur(${bgBlur}px)`;
@@ -1252,24 +751,41 @@
         bgOverlayEl.style.background = `rgba(4,6,18,${bgDim / 100})`;
       }
 
+      function loadImageElement(src) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = src;
+        });
+      }
+
+      async function setBackgroundImage(url, filename = currentBgFilename) {
+        try {
+          // 先预加载
+          await loadImageElement(url);
+          
+          bgEl.style.backgroundImage = `url(${url})`;
+          bgEl.classList.add("loaded");
+          starsEl.style.opacity = "0.3";
+          currentBgFilename = filename || '';
+        } catch (error) {
+          console.error('Failed to preload background image:', error);
+          // 降级处理：直接设置
+          bgEl.style.backgroundImage = `url(${url})`;
+          bgEl.classList.add("loaded");
+        }
+      }
+
       async function loadSavedBg() {
         try {
           const res = await fetch('/api/background');
           if (res.ok) {
             const bg = await res.json();
-            if (bg.blur != null) {
-              bgBlur = bg.blur;
-              blurSlider.value = bgBlur;
-            }
-            if (bg.dim != null) {
-              bgDim = bg.dim;
-              dimSlider.value = bgDim;
-            }
+            if (bg.blur != null) { bgBlur = bg.blur; blurSlider.value = bgBlur; }
+            if (bg.dim  != null) { bgDim  = bg.dim;  dimSlider.value  = bgDim;  }
             if (bg.filename) {
-              const url = `/uploads/${bg.filename}`;
-              bgEl.style.backgroundImage = `url(${url})`;
-              bgEl.classList.add("loaded");
-              starsEl.style.opacity = "0.3";
+              await setBackgroundImage(bg.url || `/uploads/${bg.filename}`, bg.filename);
             }
           }
         } catch (error) {
@@ -1281,107 +797,58 @@
       document.getElementById("bgFileInput").addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         const formData = new FormData();
         formData.append('image', file);
-
         try {
-          const res = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData
-          });
-
+          const res = await fetch('/api/upload', { method: 'POST', body: formData });
           if (res.ok) {
             const data = await res.json();
-            const url = data.url;
-            bgEl.style.backgroundImage = `url(${url})`;
-            bgEl.classList.add("loaded");
-            starsEl.style.opacity = "0.3";
-
-            // Save background settings with new filename
+            await setBackgroundImage(data.url, data.filename);
             await fetch('/api/background', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                filename: data.filename,
-                blur: bgBlur,
-                dim: bgDim
-              })
+              body: JSON.stringify({ filename: data.filename, blur: bgBlur, dim: bgDim })
             });
             applyBg();
-
-            // Refresh image list
             loadBgImageList();
           } else {
-            console.error('Upload failed:', await res.text());
+            const errText = await res.text();
+            console.error('Upload failed:', errText);
+            await showAlert('上传失败：' + errText, { title: '错误', confirmText: '好的' });
           }
         } catch (error) {
           console.error('Upload error:', error);
+          await showAlert('上传出错：' + error.message, { title: '错误', confirmText: '好的' });
         }
+        // Reset input so same file can be re-selected
+        e.target.value = '';
       });
 
       let bgSaveTimeout;
-      blurSlider.addEventListener("input", async () => {
-        bgBlur = +blurSlider.value;
-        applyBg();
-        // Debounce save
+      async function saveBgSettings() {
         clearTimeout(bgSaveTimeout);
         bgSaveTimeout = setTimeout(async () => {
           try {
-            const res = await fetch('/api/background', {
+            await fetch('/api/background', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                filename: getCurrentBgFilename(),
-                blur: bgBlur,
-                dim: bgDim
-              })
+              body: JSON.stringify({ filename: currentBgFilename, blur: bgBlur, dim: bgDim })
             });
-            if (!res.ok) console.error('Failed to save blur setting');
           } catch (error) {
             console.error('Save error:', error);
           }
         }, 500);
-      });
-      dimSlider.addEventListener("input", async () => {
-        bgDim = +dimSlider.value;
-        applyBg();
-        // Debounce save
-        clearTimeout(bgSaveTimeout);
-        bgSaveTimeout = setTimeout(async () => {
-          try {
-            const res = await fetch('/api/background', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                filename: getCurrentBgFilename(),
-                blur: bgBlur,
-                dim: bgDim
-              })
-            });
-            if (!res.ok) console.error('Failed to save dim setting');
-          } catch (error) {
-            console.error('Save error:', error);
-          }
-        }, 500);
-      });
-
-      // Helper function to get current background filename
-      function getCurrentBgFilename() {
-        const currentBg = bgEl.style.backgroundImage;
-        if (currentBg && currentBg !== 'none') {
-          const match = currentBg.match(/\/uploads\/([^'")]+)/);
-          return match ? match[1] : '';
-        }
-        return '';
       }
 
-      // Custom modal function
+      blurSlider.addEventListener("input", () => { bgBlur = +blurSlider.value; applyBg(); saveBgSettings(); });
+      dimSlider.addEventListener("input",  () => { bgDim  = +dimSlider.value;  applyBg(); saveBgSettings(); });
+
+      // ---- Custom Modal ----
       function showCustomModal(message, options = {}) {
         return new Promise((resolve) => {
           const {
             title = '提示',
-            confirmText = '确定',
+            confirmText = '确认',
             cancelText = '取消',
             type = 'confirm',
             confirmClass = 'confirm'
@@ -1389,7 +856,6 @@
 
           const overlay = document.createElement('div');
           overlay.className = 'custom-modal-overlay';
-
           const buttons = type === 'alert'
             ? `<button class="custom-modal-btn alert">${confirmText}</button>`
             : `<button class="custom-modal-btn cancel">${cancelText}</button>
@@ -1400,23 +866,14 @@
               <div class="custom-modal-title">${title}</div>
               <div class="custom-modal-message">${message}</div>
               <div class="custom-modal-actions">${buttons}</div>
-            </div>
-          `;
-
+            </div>`;
           document.body.appendChild(overlay);
-
-          requestAnimationFrame(() => {
-            overlay.classList.add('show');
-          });
+          requestAnimationFrame(() => overlay.classList.add('show'));
 
           const handleAction = (result) => {
             overlay.classList.remove('show');
-            setTimeout(() => {
-              overlay.remove();
-              resolve(result);
-            }, 200);
+            setTimeout(() => { overlay.remove(); resolve(result); }, 200);
           };
-
           const btns = overlay.querySelectorAll('.custom-modal-btn');
           if (type === 'alert') {
             btns[0].addEventListener('click', () => handleAction(true));
@@ -1424,120 +881,130 @@
             btns[0].addEventListener('click', () => handleAction(false));
             btns[1].addEventListener('click', () => handleAction(true));
           }
-
-          overlay.addEventListener('click', (e) => {
-            if (e.target === overlay && type !== 'alert') {
-              handleAction(false);
-            }
-          });
-
+          overlay.addEventListener('click', (e) => { if (e.target === overlay && type !== 'alert') handleAction(false); });
           const handleEsc = (e) => {
             if (e.key === 'Escape') {
-              if (type === 'alert') {
-                handleAction(true);
-              } else {
-                handleAction(false);
-              }
+              handleAction(type === 'alert');
               document.removeEventListener('keydown', handleEsc);
             }
           };
           document.addEventListener('keydown', handleEsc);
         });
       }
+      function showAlert(message, options = {}) { return showCustomModal(message, { ...options, type: 'alert' }); }
+      function showConfirm(message, options = {}) { return showCustomModal(message, { ...options, type: 'confirm' }); }
 
-      function showAlert(message, options = {}) {
-        return showCustomModal(message, { ...options, type: 'alert' });
-      }
+      // ---- BG Image List ----
+      // ---- BG Image List - 渐进式加载（Thumb → Display）----
+async function loadBgImageList() {
+  const container = document.getElementById('bgImageList');
+  try {
+    const res = await fetch('/api/images');
+    const images = await res.json();
 
-      function showConfirm(message, options = {}) {
-        return showCustomModal(message, { ...options, type: 'confirm' });
-      }
+    if (images.length === 0) {
+      container.innerHTML = '<div class="bg-no-images">暂无上传的图片</div>';
+      selectedBgFilename = '';
+      return;
+    }
 
-      // Load and display image list
-      async function loadBgImageList() {
-        const container = document.getElementById('bgImageList');
-        try {
-          const res = await fetch('/api/images');
-          const images = await res.json();
+    selectedBgFilename = currentBgFilename;
 
-          if (images.length === 0) {
-            container.innerHTML = '<div class="bg-no-images">暂无已上传的图片</div>';
-            selectedBgFilename = '';
-            return;
-          }
+    const cols = [[], [], []];
+    images.forEach((img, i) => cols[i % 3].push(img));
 
-          const currentFilename = getCurrentBgFilename();
-          selectedBgFilename = currentFilename; // 初始化选中状态
+    // 生成 HTML（关键修改部分）
+    container.innerHTML = cols.map(col => `
+      <div class="masonry-col">
+        ${col.map(img => `
+          <div class="bg-image-item ${img.filename === currentBgFilename ? 'active' : ''}"
+               data-filename="${img.filename}" 
+               data-display-url="${img.url || img.displayUrl || img.originalUrl}">
+            <img 
+              src="${img.thumbUrl || img.url}" 
+              data-display-src="${img.url || img.displayUrl || img.originalUrl}"
+              alt="" 
+              loading="lazy" 
+              decoding="async" 
+            />
+          </div>`).join('')}
+      </div>`).join('');
 
-          // 把图片按索引分配到3列（0,3,6→列1；1,4,7→列2；2,5,8→列3）
-          const cols = [[], [], []];
-          images.forEach((img, i) => cols[i % 3].push(img));
+        // === 核心：为每张图片实现 Thumb → Display 渐进加载 ===
+        container.querySelectorAll('.bg-image-item img').forEach(img => {
+          const thumbSrc = img.src;
+          const displaySrc = img.dataset.displaySrc;
 
-          container.innerHTML = cols.map(col => `
-            <div class="masonry-col">
-              ${col.map(img => `
-                <div class="bg-image-item ${img.filename === currentFilename ? 'active' : ''}"
-                     data-filename="${img.filename}">
-                  <img src="${img.url}" alt="背景图片" />
-                </div>
-              `).join('')}
-            </div>
-          `).join('');
+          // 如果 thumb 和 display 是同一张图，就不需要升级
+          if (!displaySrc || displaySrc === thumbSrc) return;
 
-          // Bind click events - select and set as background
-          container.querySelectorAll('.bg-image-item').forEach(item => {
-            item.addEventListener('click', async () => {
-              const filename = item.dataset.filename;
+          const preloadImg = new Image();
 
-              // 更新选中状态
-              container.querySelectorAll('.bg-image-item').forEach(i => i.classList.remove('active'));
-              item.classList.add('active');
-              selectedBgFilename = filename;
+          preloadImg.onload = () => {
+            // 开始切换
+            img.classList.add('loading');
 
-              // 设置为背景
-              bgEl.style.backgroundImage = `url(/uploads/${filename})`;
-              bgEl.classList.add("loaded");
-              starsEl.style.opacity = "0.3";
+            // 等待一点时间让浏览器准备好新图片
+            setTimeout(() => {
+              img.src = displaySrc;
 
-              // 保存设置
-              await fetch('/api/background', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename, blur: bgBlur, dim: bgDim })
-              });
-            });
-          });
-        } catch (error) {
-          console.error('Failed to load image list:', error);
-        }
-      }
+              // 加载完成后恢复清晰
+              img.onload = () => {
+                img.classList.remove('loading');
+              };
+            }, 120);
+          };
 
-      // Delete selected image button
-      document.getElementById("deleteCurrentBgBtn").addEventListener("click", async () => {
-        if (!selectedBgFilename) {
-          await showAlert('请先选中一张图片', {
-            title: '提示',
-            confirmText: '好的'
-          });
-          return;
-        }
-
-        const confirmed = await showConfirm('确定要删除选中的图片吗？', {
-          title: '删除确认',
-          confirmText: '删除',
-          cancelText: '取消'
+          // 开始预加载高清 display 图（不阻塞当前显示）
+          preloadImg.src = displaySrc;
         });
 
-        if (!confirmed) return;
+        // 点击切换背景
+        container.querySelectorAll('.bg-image-item').forEach(item => {
+          item.addEventListener('click', async () => {
+            const filename = item.dataset.filename;
+            const displayUrl = item.querySelector('img').dataset.displaySrc;
 
+            // 移除其他 active 状态
+            container.querySelectorAll('.bg-image-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+
+            selectedBgFilename = filename;
+
+            // 使用 display 图作为背景（更清晰）
+            await setBackgroundImage(displayUrl, filename);
+
+            // 保存设置
+            await fetch('/api/background', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ filename, blur: bgBlur, dim: bgDim })
+            });
+          });
+        });
+
+      } catch (error) {
+        console.error('Failed to load image list:', error);
+        container.innerHTML = '<div class="bg-no-images">加载图片列表失败</div>';
+      }
+    }
+      document.getElementById("deleteCurrentBgBtn").addEventListener("click", async () => {
+        if (!selectedBgFilename) {
+          await showAlert('请先选择一张图片', { title: '提示', confirmText: '好的' });
+          return;
+        }
+        const confirmed = await showConfirm('确认要删除选中的图片吗？', {
+          title: '删除确认', confirmText: '删除', cancelText: '取消'
+        });
+        if (!confirmed) return;
         try {
           const res = await fetch(`/api/upload/${selectedBgFilename}`, { method: 'DELETE' });
           if (res.ok) {
-            // 如果删除的是当前背景，清除显示
-            if (selectedBgFilename === getCurrentBgFilename()) {
+            if (selectedBgFilename === currentBgFilename) {
               bgEl.style.backgroundImage = "";
               bgEl.classList.remove("loaded");
               starsEl.style.opacity = "1";
+              currentBgFilename = '';
             }
             selectedBgFilename = '';
             loadBgImageList();
@@ -1552,71 +1019,50 @@
         bgPanel.classList.add("open");
         loadBgImageList();
       });
+      document.getElementById("bgPanelClose").addEventListener("click", () => bgPanel.classList.remove("open"));
+      bgPanel.addEventListener("click", (e) => { if (e.target === bgPanel) bgPanel.classList.remove("open"); });
 
-      document.getElementById("bgPanelClose").addEventListener("click", () => {
-        bgPanel.classList.remove("open");
-      });
       document.getElementById("randomFaviconBtn").addEventListener("click", () => {
         const all = allEmojis();
         const picked = all[Math.floor(Math.random() * all.length)];
         let link = document.querySelector("link[rel~='icon']");
-        if (!link) {
-          link = document.createElement("link");
-          link.rel = "icon";
-          document.head.appendChild(link);
-        }
+        if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
         const canvas = document.createElement("canvas");
-        canvas.width = 32;
-        canvas.height = 32;
+        canvas.width = 32; canvas.height = 32;
         const ctx = canvas.getContext("2d");
-        ctx.font = "28px serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
+        ctx.font = "28px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
         ctx.fillText(picked, 16, 16);
         link.href = canvas.toDataURL();
         document.querySelectorAll(".tab-emoji").forEach(el => {
-          el.style.transform = "scale(0)";
-          el.style.opacity = "0";
+          el.style.transform = "scale(0)"; el.style.opacity = "0";
           setTimeout(() => {
             el.textContent = all[Math.floor(Math.random() * all.length)];
-            el.style.transform = "scale(1)";
-            el.style.opacity = "1";
+            el.style.transform = "scale(1)"; el.style.opacity = "1";
           }, 100);
         });
       });
-      // Close panel when clicking outside (only when panel is open)
-      bgPanel.addEventListener("click", (e) => {
-        if (e.target === bgPanel) {
-          bgPanel.classList.remove("open");
-        }
-      });
+
       loadSavedBg();
 
-      // Set default favicon to 🎲 emoji
+      // Set default favicon
       (function setDefaultFavicon() {
         const canvas = document.createElement("canvas");
-        canvas.width = 32;
-        canvas.height = 32;
+        canvas.width = 32; canvas.height = 32;
         const ctx = canvas.getContext("2d");
-        ctx.font = "28px serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("🎲", 16, 16);
+        ctx.font = "28px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("🔍", 16, 16);
         document.getElementById("faviconLink").href = canvas.toDataURL();
       })();
 
-      // ── SEARCH
+      // ---- SEARCH ----
       let engine = "google";
       const engines = {
-        google: (q) =>
-          `https://www.google.com/search?q=${encodeURIComponent(q)}`,
-        bing: (q) => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
+        google: (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+        bing:   (q) => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
       };
       document.querySelectorAll(".engine-tab").forEach((btn) => {
         btn.addEventListener("click", () => {
-          document
-            .querySelectorAll(".engine-tab")
-            .forEach((b) => b.classList.remove("active"));
+          document.querySelectorAll(".engine-tab").forEach(b => b.classList.remove("active"));
           btn.classList.add("active");
           engine = btn.dataset.engine;
         });
@@ -1627,69 +1073,25 @@
         window.open(engines[engine](q), "_blank");
       }
       document.getElementById("searchBtn").addEventListener("click", doSearch);
-      document
-        .getElementById("searchInput")
-        .addEventListener("keydown", (e) => {
-          if (e.key === "Enter") doSearch();
-        });
+      document.getElementById("searchInput").addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
 
-      // ── LINKS
+      // ---- LINKS ----
       const DEFAULTS = [
-        {
-          id: 1,
-          name: "GitHub",
-          url: "https://github.com",
-          icon: "🐙",
-          cat: "工具",
-        },
-        {
-          id: 2,
-          name: "YouTube",
-          url: "https://youtube.com",
-          icon: "📺",
-          cat: "娱乐",
-        },
-        {
-          id: 3,
-          name: "Twitter/X",
-          url: "https://x.com",
-          icon: "🐦",
-          cat: "社交",
-        },
-        {
-          id: 4,
-          name: "Gmail",
-          url: "https://mail.google.com",
-          icon: "✉️",
-          cat: "邮件",
-        },
-        {
-          id: 5,
-          name: "Wikipedia",
-          url: "https://www.wikipedia.org",
-          icon: "📖",
-          cat: "知识",
-        },
-        {
-          id: 6,
-          name: "Figma",
-          url: "https://figma.com",
-          icon: "🎨",
-          cat: "设计",
-        },
+        { id: 1, name: "GitHub",    url: "https://github.com",          icon: "💻", cat: "开发" },
+        { id: 2, name: "YouTube",   url: "https://youtube.com",         icon: "📺", cat: "娱乐" },
+        { id: 3, name: "Twitter/X", url: "https://x.com",               icon: "🐦", cat: "社交" },
+        { id: 4, name: "Gmail",     url: "https://mail.google.com",     icon: "📧", cat: "邮件" },
+        { id: 5, name: "Wikipedia", url: "https://www.wikipedia.org",   icon: "📚", cat: "知识" },
+        { id: 6, name: "Figma",     url: "https://figma.com",           icon: "🎨", cat: "设计" },
       ];
+
       async function loadLinks() {
         try {
           const res = await fetch('/api/links');
-          if (res.ok) {
-            return await res.json();
-          }
-        } catch (error) {
-          console.error('Failed to load links:', error);
-        }
+          if (res.ok) return await res.json();
+        } catch (error) { console.error('Failed to load links:', error); }
         return [...DEFAULTS];
       }
-
       async function saveLinks() {
         try {
           await fetch('/api/links', {
@@ -1697,23 +1099,15 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(links)
           });
-        } catch (error) {
-          console.error('Failed to save links:', error);
-        }
+        } catch (error) { console.error('Failed to save links:', error); }
       }
 
       let links = [];
-      // Load links asynchronously on page load
-      loadLinks().then(loadedLinks => {
-        links = loadedLinks;
-        renderGrid();
-      });
+      loadLinks().then(loaded => { links = loaded; renderGrid(); });
+
       function getFavicon(url) {
-        try {
-          return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=64`;
-        } catch {
-          return null;
-        }
+        try { return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=64`; }
+        catch { return null; }
       }
 
       const gridEl = document.getElementById("linksGrid");
@@ -1724,67 +1118,59 @@
           card.className = "link-card";
           card.style.animationDelay = `${idx * 0.04}s`;
           const fav = lk.useEmoji ? null : getFavicon(lk.url);
+          const iconHtml = fav
+            ? `<img src="${fav}" alt="" onerror="this.parentElement.innerHTML='${lk.icon.replace(/'/g, "&#39;")}';">`
+            : lk.icon;
           card.innerHTML = `
-      <div class="card-actions">
-        <button class="card-action-btn edit" title="编辑">✎</button>
-        <button class="card-action-btn del"  title="删除">✕</button>
-      </div>
-      <div class="card-favicon">${fav ? `<img src="${fav}" alt="" onerror="this.parentElement.innerHTML='${lk.icon.replace(/'/g, "&#39;")}'">` : lk.icon}</div>
-      <div class="card-name">${lk.name}</div>
-      <div class="card-url">${new URL(lk.url).hostname.replace("www.", "")}</div>
-      ${lk.cat ? `<span class="card-cat">${lk.cat}</span>` : ""}
-    `;
+            <div class="card-actions">
+              <button class="card-action-btn edit" title="编辑">✏️</button>
+              <button class="card-action-btn del"  title="删除">🗑️</button>
+            </div>
+            <div class="card-favicon">${iconHtml}</div>
+            <div class="card-name">${lk.name}</div>
+            <div class="card-url">${new URL(lk.url).hostname.replace("www.", "")}</div>
+            ${lk.cat ? `<span class="card-cat">${lk.cat}</span>` : ""}`;
           card.addEventListener("click", (e) => {
-            if (!e.target.closest(".card-action-btn"))
-              window.open(lk.url, "_blank");
+            if (!e.target.closest(".card-action-btn")) window.open(lk.url, "_blank");
           });
-          card.querySelector(".edit").addEventListener("click", (e) => {
-            e.stopPropagation();
-            openModal(lk.id);
-          });
+          card.querySelector(".edit").addEventListener("click", (e) => { e.stopPropagation(); openModal(lk.id); });
           card.querySelector(".del").addEventListener("click", (e) => {
             e.stopPropagation();
             card.style.animation = "cardOut 0.25s forwards";
-            setTimeout(() => {
-              links = links.filter((l) => l.id !== lk.id);
-              saveLinks();
-              renderGrid();
-            }, 220);
+            setTimeout(() => { links = links.filter(l => l.id !== lk.id); saveLinks(); renderGrid(); }, 220);
           });
           gridEl.appendChild(card);
         });
         const plus = document.createElement("div");
         plus.className = "link-card add-placeholder";
-        plus.innerHTML = `<div class="add-placeholder-icon">＋</div><div class="add-placeholder-text">添加链接</div>`;
+        plus.innerHTML = `<div class="add-placeholder-icon">➕</div><div class="add-placeholder-text">添加链接</div>`;
         plus.addEventListener("click", () => openModal());
         gridEl.appendChild(plus);
       }
 
-      // toggle
-      const wrapEl = document.getElementById("linksGridWrap"),
-        toggleEl = document.getElementById("linksToggle");
+      // Toggle links section
+      const wrapEl   = document.getElementById("linksGridWrap");
+      const toggleEl = document.getElementById("linksToggle");
       toggleEl.addEventListener("click", () => {
         const o = wrapEl.classList.toggle("open");
         toggleEl.classList.toggle("open", o);
-        document.getElementById("toggleLabel").textContent = o
-          ? "收起链接"
-          : "常用链接";
+        document.getElementById("toggleLabel").textContent = o ? "隐藏快捷链接" : "显示快捷链接";
       });
-      // ── EMOJI DATA (loaded from server)
+
+      // ---- EMOJI DATA ----
       let EMOJI_CATS = { "全部": null };
 
       fetch('/api/emojis').then(r => r.json()).then(data => {
-        // Map English group names to Chinese
         const groupNames = {
           "Smileys & Emotion": "表情",
-          "People & Body": "人物",
-          "Animals & Nature": "动物自然",
-          "Food & Drink": "食物饮品",
-          "Travel & Places": "旅行地点",
-          "Activities": "活动",
-          "Objects": "物品",
-          "Symbols": "符号",
-          "Flags": "旗帜"
+          "People & Body":     "人物",
+          "Animals & Nature":  "动植物",
+          "Food & Drink":      "食物饮品",
+          "Travel & Places":   "旅行地点",
+          "Activities":        "活动",
+          "Objects":           "物品",
+          "Symbols":           "符号",
+          "Flags":             "旗帜"
         };
         EMOJI_CATS = { "全部": null };
         Object.entries(data).forEach(([group, emojis]) => {
@@ -1792,26 +1178,20 @@
           EMOJI_CATS[cn] = emojis;
         });
       }).catch(() => {
-        // Fallback minimal set
         EMOJI_CATS = {
           "全部": null,
-          "常用": ["🌐","⭐","🔗","📌","🏠","💡","🚀","🔥","✨","💎","🎯","⚡"]
+          "表情": ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","😊","😇","🥰"]
         };
       });
 
-
-      let activeCat = "全部",
-        selectedEmoji = "🌐",
-        useEmoji = false,
-        editId = null;
-      const inputName = document.getElementById("inputName"),
-        inputUrl = document.getElementById("inputUrl"),
-        inputCat = document.getElementById("inputCat"),
-        overlay = document.getElementById("modalOverlay");
-
+      let activeCat = "全部", selectedEmoji = "💡", useEmoji = false, editId = null;
+      const inputName = document.getElementById("inputName");
+      const inputUrl  = document.getElementById("inputUrl");
+      const inputCat  = document.getElementById("inputCat");
+      const overlay   = document.getElementById("modalOverlay");
       const toggleFaviconBtn = document.getElementById("toggleFavicon");
-      const toggleEmojiBtn = document.getElementById("toggleEmoji");
-      const emojiSection = document.getElementById("emojiSection");
+      const toggleEmojiBtn   = document.getElementById("toggleEmoji");
+      const emojiSection     = document.getElementById("emojiSection");
 
       toggleFaviconBtn.addEventListener("click", () => {
         useEmoji = false;
@@ -1833,34 +1213,20 @@
         const picked = all[Math.floor(Math.random() * all.length)];
         selectedEmoji = picked;
         document.getElementById("randomEmojiResult").textContent = picked;
-
-        // Try to update highlight in current view without full rebuild
         const g = document.getElementById("emojiGrid");
         const existing = g.querySelector(".emoji-btn.selected");
         if (existing) existing.classList.remove("selected");
         const target = Array.from(g.querySelectorAll(".emoji-btn")).find(b => b.textContent === picked);
-        if (target) {
-          target.classList.add("selected");
-          target.scrollIntoView({ block: "nearest" });
-        } else {
-          // Picked emoji not in current category view, switch to 全部
-          activeCat = "全部";
-          buildEmojiUI();
-        }
+        if (target) { target.classList.add("selected"); target.scrollIntoView({ block: "nearest" }); }
+        else { activeCat = "全部"; buildEmojiUI(); }
       });
 
       function allEmojis() {
-        return [
-          ...new Set(
-            Object.entries(EMOJI_CATS)
-              .filter(([k]) => k !== "全部")
-              .flatMap(([, v]) => v),
-          ),
-        ];
+        return [...new Set(
+          Object.entries(EMOJI_CATS).filter(([k]) => k !== "全部").flatMap(([, v]) => v)
+        )];
       }
-      function getEmojis(cat) {
-        return cat === "全部" ? allEmojis() : EMOJI_CATS[cat] || [];
-      }
+      function getEmojis(cat) { return cat === "全部" ? allEmojis() : EMOJI_CATS[cat] || []; }
 
       function buildEmojiUI() {
         const catsEl = document.getElementById("emojiCats");
@@ -1869,10 +1235,7 @@
           const b = document.createElement("button");
           b.className = "emoji-cat-btn" + (cat === activeCat ? " active" : "");
           b.textContent = cat;
-          b.addEventListener("click", () => {
-            activeCat = cat;
-            buildEmojiUI();
-          });
+          b.addEventListener("click", () => { activeCat = cat; buildEmojiUI(); });
           catsEl.appendChild(b);
         });
         const g = document.getElementById("emojiGrid");
@@ -1880,13 +1243,10 @@
         getEmojis(activeCat).forEach((em) => {
           const b = document.createElement("button");
           b.className = "emoji-btn" + (em === selectedEmoji ? " selected" : "");
-          b.textContent = em;
-          b.title = em;
+          b.textContent = em; b.title = em;
           b.addEventListener("click", () => {
             selectedEmoji = em;
-            g.querySelectorAll(".emoji-btn").forEach((x) =>
-              x.classList.remove("selected"),
-            );
+            g.querySelectorAll(".emoji-btn").forEach(x => x.classList.remove("selected"));
             b.classList.add("selected");
           });
           g.appendChild(b);
@@ -1895,20 +1255,17 @@
 
       function openModal(id) {
         editId = id || null;
-        document.getElementById("modalTitle").textContent = id
-          ? "编辑链接"
-          : "添加链接";
+        document.getElementById("modalTitle").textContent = id ? "编辑链接" : "添加链接";
         if (id) {
-          const lk = links.find((l) => l.id === id);
+          const lk = links.find(l => l.id === id);
           inputName.value = lk.name;
-          inputUrl.value = lk.url;
-          inputCat.value = lk.cat || "";
-          selectedEmoji = lk.icon || "🌐";
-          useEmoji = !!lk.useEmoji;
+          inputUrl.value  = lk.url;
+          inputCat.value  = lk.cat || "";
+          selectedEmoji   = lk.icon || "💡";
+          useEmoji        = !!lk.useEmoji;
         } else {
           inputName.value = inputUrl.value = inputCat.value = "";
-          selectedEmoji = "🌐";
-          useEmoji = false;
+          selectedEmoji = "💡"; useEmoji = false;
         }
         if (useEmoji) {
           toggleEmojiBtn.classList.add("active");
@@ -1927,44 +1284,22 @@
         overlay.classList.add("open");
         setTimeout(() => inputName.focus(), 120);
       }
-      function closeModal() {
-        overlay.classList.remove("open");
-      }
+      function closeModal() { overlay.classList.remove("open"); }
 
-      document
-        .getElementById("modalCancel")
-        .addEventListener("click", closeModal);
-      overlay.addEventListener("click", (e) => {
-        if (e.target === overlay) closeModal();
-      });
+      document.getElementById("modalCancel").addEventListener("click", closeModal);
+      overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
       document.getElementById("modalConfirm").addEventListener("click", () => {
         const name = inputName.value.trim();
         let url = inputUrl.value.trim();
         if (!name || !url) return;
         if (!/^https?:\/\//.test(url)) url = "https://" + url;
         if (editId) {
-          const i = links.findIndex((l) => l.id === editId);
-          links[i] = {
-            ...links[i],
-            name,
-            url,
-            icon: selectedEmoji,
-            useEmoji,
-            cat: inputCat.value.trim(),
-          };
+          const i = links.findIndex(l => l.id === editId);
+          links[i] = { ...links[i], name, url, icon: selectedEmoji, useEmoji, cat: inputCat.value.trim() };
         } else {
-          links.push({
-            id: Date.now(),
-            name,
-            url,
-            icon: selectedEmoji,
-            useEmoji,
-            cat: inputCat.value.trim(),
-          });
+          links.push({ id: Date.now(), name, url, icon: selectedEmoji, useEmoji, cat: inputCat.value.trim() });
         }
-        saveLinks();
-        renderGrid();
-        closeModal();
+        saveLinks(); renderGrid(); closeModal();
       });
 
       document.addEventListener("keydown", (e) => {
