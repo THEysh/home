@@ -23,6 +23,28 @@
 
 ## 快速开始
 
+### 方式1：使用 Docker
+项目根目录已包含以下 docker-compose.yml：
+```yaml
+version: '3.8'
+
+services:
+  search-home:
+    image: theysh0303/search-home:latest
+    container_name: search-home
+    ports:
+      - "39421:39421"          # 宿主机端
+    restart: unless-stopped            # 容器意外退出后自动重启
+```
+关键说明：
+端口：默认映射宿主机的 39421 端口，访问地址为 http://你的服务器IP:39421
+重启策略：unless-stopped 是生产环境推荐设置
+#### 使用 compose 构建并启动
+```sh
+docker compose up -d --build
+```
+
+### 方式2：使用 Node.js
 ### 1. 克隆项目
 
 ```bash

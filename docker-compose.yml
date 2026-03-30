@@ -6,8 +6,4 @@ services:
     container_name: search-home
     ports:
       - "39421:39421"
-    volumes:
-      # 持久化数据文件
-      - ./links.json:/app/links.json
-      - ./uploads:/app/uploads
     restart: unless-stopped
