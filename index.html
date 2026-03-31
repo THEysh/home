@@ -207,6 +207,7 @@
       }
       .bg-image-item:hover { border-color: rgba(91,140,255,0.5); box-shadow: 0 0 12px rgba(91,140,255,0.3); }
       .bg-image-item.active { border-color: var(--accent); box-shadow: 0 0 15px rgba(91,140,255,0.5); }
+      .bg-image-item.editing { cursor: default; }
       .bg-image-item img {
         width: 100%;
         height: auto;
@@ -214,6 +215,35 @@
         transition: opacity 0.45s ease;
         opacity: 1;
       }
+      .bg-image-item .crop-overlay {
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.4);
+        pointer-events: none; opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .bg-image-item:hover .crop-overlay, .bg-image-item.editing .crop-overlay { opacity: 1; }
+      .bg-crop-box {
+        position: absolute;
+        border: 2px solid #5b8cff;
+        background: rgba(91, 140, 255, 0.15);
+        cursor: move;
+        box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+        pointer-events: auto;
+      }
+      .bg-crop-handle { position: absolute; width: 12px; height: 12px; background: #5b8cff; border-radius: 50%; cursor: grab; }
+      .bg-crop-handle:active { cursor: grabbing; }
+      .bg-crop-handle-tl { top: -6px; left: -6px; cursor: nwse-resize; }
+      .bg-crop-handle-tr { top: -6px; right: -6px; cursor: nesw-resize; }
+      .bg-crop-handle-bl { bottom: -6px; left: -6px; cursor: nesw-resize; }
+      .bg-crop-handle-br { bottom: -6px; right: -6px; cursor: nwse-resize; }
+      .bg-crop-instructions {
+        position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+        background: rgba(0,0,0,0.7); color: #fff; font-size: 0.65rem;
+        padding: 3px 8px; border-radius: 4px; white-space: nowrap;
+        pointer-events: none; opacity: 0; transition: opacity 0.2s;
+        z-index: 10;
+      }
+      .bg-image-item:hover .bg-crop-instructions, .bg-image-item.editing .bg-crop-instructions { opacity: 1; }
       .bg-no-images { text-align: center; color: var(--text-secondary); font-size: 0.85rem; padding: 2rem 0; }
 
       /* Custom Confirm Modal */
@@ -744,10 +774,13 @@
       const bgToggle    = document.getElementById("bgToggleBtn");
 
       let bgBlur = 18, bgDim = 52, selectedBgFilename = '', currentBgFilename = '';
+      let bgPositionX = 50, bgPositionY = 50;
+      let activeCropBoxSync = null;
 
       function applyBg() {
         bgEl.style.filter = `blur(${bgBlur}px)`;
         bgEl.style.transform = `scale(${1 + bgBlur * 0.004})`;
+        bgEl.style.backgroundPosition = `${bgPositionX}% ${bgPositionY}%`;
         bgOverlayEl.style.background = `rgba(4,6,18,${bgDim / 100})`;
       }
 
@@ -784,6 +817,8 @@
             const bg = await res.json();
             if (bg.blur != null) { bgBlur = bg.blur; blurSlider.value = bgBlur; }
             if (bg.dim  != null) { bgDim  = bg.dim;  dimSlider.value  = bgDim;  }
+            if (bg.positionX != null) { bgPositionX = bg.positionX; }
+            if (bg.positionY != null) { bgPositionY = bg.positionY; }
             if (bg.filename) {
               await setBackgroundImage(bg.url || `/uploads/${bg.filename}`, bg.filename);
             }
@@ -807,7 +842,7 @@
             await fetch('/api/background', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ filename: data.filename, blur: bgBlur, dim: bgDim })
+              body: JSON.stringify({ filename: data.filename, blur: bgBlur, dim: bgDim, positionX: bgPositionX, positionY: bgPositionY })
             });
             applyBg();
             loadBgImageList();
@@ -832,7 +867,7 @@
             await fetch('/api/background', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ filename: currentBgFilename, blur: bgBlur, dim: bgDim })
+              body: JSON.stringify({ filename: currentBgFilename, blur: bgBlur, dim: bgDim, positionX: bgPositionX, positionY: bgPositionY })
             });
           } catch (error) {
             console.error('Save error:', error);
@@ -959,11 +994,29 @@ async function loadBgImageList() {
           preloadImg.src = displaySrc;
         });
 
+        // 为当前选中的图片初始化裁剪框
+        container.querySelectorAll('.bg-image-item.active').forEach((item) => {
+          setTimeout(() => {
+            const img = item.querySelector('img');
+            if (img.complete) {
+              initCropBox(item, img, true);
+            } else {
+              img.onload = () => initCropBox(item, img, true);
+            }
+          }, 100);
+        });
+
         // 点击切换背景
-        container.querySelectorAll('.bg-image-item').forEach(item => {
-          item.addEventListener('click', async () => {
+        container.querySelectorAll('.bg-image-item').forEach((item) => {
+          item.addEventListener('click', async (e) => {
+            // 如果点击的是裁剪框，不切换背景
+            if (e.target.closest('.bg-crop-box')) return;
+
             const filename = item.dataset.filename;
             const displayUrl = item.querySelector('img').dataset.displaySrc;
+
+            // 移除所有旧的裁剪框
+            container.querySelectorAll('.crop-overlay, .bg-crop-box, .bg-crop-instructions').forEach(el => el.remove());
 
             // 移除其他 active 状态
             container.querySelectorAll('.bg-image-item').forEach(i => i.classList.remove('active'));
@@ -974,12 +1027,21 @@ async function loadBgImageList() {
             // 使用 display 图作为背景（更清晰）
             await setBackgroundImage(displayUrl, filename);
 
+            // 重置位置为居中
+            bgPositionX = 50;
+            bgPositionY = 50;
+
+            // 重新为当前图片初始化裁剪框
+            const img = item.querySelector('img');
+            initCropBox(item, img, true);
+
             // 保存设置
             await fetch('/api/background', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ filename, blur: bgBlur, dim: bgDim })
+              body: JSON.stringify({ filename, blur: bgBlur, dim: bgDim, positionX: bgPositionX, positionY: bgPositionY })
             });
+            applyBg();
           });
         });
 
@@ -988,7 +1050,306 @@ async function loadBgImageList() {
         container.innerHTML = '<div class="bg-no-images">加载图片列表失败</div>';
       }
     }
-      document.getElementById("deleteCurrentBgBtn").addEventListener("click", async () => {
+
+    function initCropBoxLegacy(item, img, isActive) {
+      if (!isActive) return;
+
+      const overlay = document.createElement('div');
+      overlay.className = 'crop-overlay';
+      item.appendChild(overlay);
+
+      const instructions = document.createElement('div');
+      instructions.className = 'bg-crop-instructions';
+      instructions.textContent = '拖动框选区域，拖动角落调整大小';
+      item.appendChild(instructions);
+
+      const box = document.createElement('div');
+      box.className = 'bg-crop-box';
+      item.appendChild(box);
+
+      // 创建四个角落手柄
+      ['tl', 'tr', 'bl', 'br'].forEach(pos => {
+        const handle = document.createElement('div');
+        handle.className = `bg-crop-handle bg-crop-handle-${pos}`;
+        handle.dataset.handle = pos;
+        box.appendChild(handle);
+      });
+
+      // 根据当前 position 初始化框的位置和大小
+      function syncBoxToPosition() {
+        const rect = img.getBoundingClientRect();
+        const viewAspect = window.innerWidth / window.innerHeight;
+        const imgAspect = rect.width / rect.height;
+
+        let w, h;
+        if (viewAspect > imgAspect) {
+          w = rect.width * 0.6;
+          h = w / viewAspect;
+        } else {
+          h = rect.height * 0.6;
+          w = h * viewAspect;
+        }
+        const minW = 40, minH = 40 / viewAspect;
+        w = Math.max(w, minW);
+        h = Math.max(h, minH);
+
+        // center 基于 bgPositionX/Y 映射到缩略图坐标
+        const cx = (bgPositionX / 100) * rect.width;
+        const cy = (bgPositionY / 100) * rect.height;
+
+        let l = cx - w / 2;
+        let t = cy - h / 2;
+        l = Math.max(0, Math.min(l, rect.width - w));
+        t = Math.max(0, Math.min(t, rect.height - h));
+
+        box.style.width = w + 'px';
+        box.style.height = h + 'px';
+        box.style.left = l + 'px';
+        box.style.top = t + 'px';
+      }
+      syncBoxToPosition();
+
+      // 同步当前位置到背景
+      function syncPosition() {
+        const rect = img.getBoundingClientRect();
+        const l = parseFloat(box.style.left) || 0;
+        const t = parseFloat(box.style.top) || 0;
+        const w = parseFloat(box.style.width) || 0;
+        const h = parseFloat(box.style.height) || 0;
+        bgPositionX = ((l + w / 2) / rect.width) * 100;
+        bgPositionY = ((t + h / 2) / rect.height) * 100;
+        applyBg();
+      }
+
+      let isDragging = false;
+      let isResizing = false;
+      let resizeHandle = '';
+      let startX, startY, startL, startT, startW, startH;
+
+      box.addEventListener('mousedown', (e) => {
+        const h = e.target.closest('.bg-crop-handle');
+        e.preventDefault();
+        e.stopPropagation();
+        startX = e.clientX;
+        startY = e.clientY;
+
+        if (h) {
+          isResizing = true;
+          resizeHandle = h.dataset.handle;
+          startW = box.offsetWidth;
+          startH = box.offsetHeight;
+          startL = box.offsetLeft;
+          startT = box.offsetTop;
+        } else {
+          isDragging = true;
+          startL = box.offsetLeft;
+          startT = box.offsetTop;
+        }
+        item.classList.add('editing');
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        const rect = img.getBoundingClientRect();
+        const viewAspect = window.innerWidth / window.innerHeight;
+
+        if (isDragging) {
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          let nl = startL + dx;
+          let nt = startT + dy;
+          nl = Math.max(0, Math.min(nl, rect.width - box.offsetWidth));
+          nt = Math.max(0, Math.min(nt, rect.height - box.offsetHeight));
+          box.style.left = nl + 'px';
+          box.style.top = nt + 'px';
+          syncPosition();
+        } else if (isResizing) {
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+
+          // 按手柄方向计算大小变化
+          let dw = 0, dl = 0;
+          let dh = 0, dt = 0;
+
+          if (resizeHandle.includes('r')) {
+            dw = dx;
+          }
+          if (resizeHandle.includes('l')) {
+            dw = -dx;
+            dl = dx;
+          }
+          if (resizeHandle.includes('b')) {
+            dh = dy;
+          }
+          if (resizeHandle.includes('t')) {
+            dh = -dy;
+            dt = dy;
+          }
+
+          // 按比例缩放：以变化大的方向为准
+          let nw, nh;
+          if (Math.abs(dw / startW) > Math.abs(dh / startH)) {
+            nw = startW + dw;
+            nh = nw / viewAspect;
+            if (resizeHandle.includes('t')) {
+              dt = startH - nh;
+            }
+          } else {
+            nh = startH + dh;
+            nw = nh * viewAspect;
+            if (resizeHandle.includes('l')) {
+              dl = startW - nw;
+            }
+          }
+
+          let nl = startL + dl;
+          let nt = startT + dt;
+
+          // 限制最小尺寸
+          const minW = 30, minH = 30 / viewAspect;
+          if (nw < minW || nh < minH) return;
+
+          // 边界限制
+          if (nl < 0) { nl = 0; nw = startL + startW; nh = nw / viewAspect; }
+          if (nt < 0) { nt = 0; nh = startT + startH; nw = nh * viewAspect; }
+          if (nl + nw > rect.width) { nw = rect.width - nl; nh = nw / viewAspect; }
+          if (nt + nh > rect.height) { nh = rect.height - nt; nw = nh * viewAspect; }
+
+          box.style.left = nl + 'px';
+          box.style.top = nt + 'px';
+          box.style.width = nw + 'px';
+          box.style.height = nh + 'px';
+          syncPosition();
+        }
+      });
+
+      document.addEventListener('mouseup', async () => {
+        if (!isDragging && !isResizing) return;
+        isDragging = false;
+        isResizing = false;
+        item.classList.remove('editing');
+        await saveBgSettings();
+      });
+    }
+
+    function initCropBox(item, img, isActive) {
+      if (!isActive) return;
+
+      const overlay = document.createElement('div');
+      overlay.className = 'crop-overlay';
+      item.appendChild(overlay);
+
+      const instructions = document.createElement('div');
+      instructions.className = 'bg-crop-instructions';
+      instructions.textContent = '拖动框选区域来调整背景显示位置，框的大小就是实际可见范围';
+      item.appendChild(instructions);
+
+      const box = document.createElement('div');
+      box.className = 'bg-crop-box';
+      item.appendChild(box);
+
+      function getCoverViewportRect() {
+        const rect = img.getBoundingClientRect();
+        const viewAspect = window.innerWidth / window.innerHeight;
+        const imgAspect = rect.width / rect.height;
+
+        if (viewAspect > imgAspect) {
+          return { rect, width: rect.width, height: rect.width / viewAspect };
+        }
+        return { rect, width: rect.height * viewAspect, height: rect.height };
+      }
+
+      function clampBackgroundPosition() {
+        bgPositionX = Math.max(0, Math.min(100, bgPositionX));
+        bgPositionY = Math.max(0, Math.min(100, bgPositionY));
+      }
+
+      function syncBoxToPosition() {
+        const { rect, width, height } = getCoverViewportRect();
+        const overflowX = Math.max(0, rect.width - width);
+        const overflowY = Math.max(0, rect.height - height);
+        clampBackgroundPosition();
+
+        const left = overflowX === 0 ? 0 : (bgPositionX / 100) * overflowX;
+        const top = overflowY === 0 ? 0 : (bgPositionY / 100) * overflowY;
+
+        box.style.width = width + 'px';
+        box.style.height = height + 'px';
+        box.style.left = left + 'px';
+        box.style.top = top + 'px';
+      }
+
+      activeCropBoxSync = () => {
+        if (!item.isConnected || !img.isConnected) {
+          if (activeCropBoxSync) activeCropBoxSync = null;
+          return;
+        }
+        syncBoxToPosition();
+      };
+
+      function syncPosition() {
+        const { rect, width, height } = getCoverViewportRect();
+        const left = parseFloat(box.style.left) || 0;
+        const top = parseFloat(box.style.top) || 0;
+        const overflowX = Math.max(0, rect.width - width);
+        const overflowY = Math.max(0, rect.height - height);
+
+        bgPositionX = overflowX === 0 ? 50 : (left / overflowX) * 100;
+        bgPositionY = overflowY === 0 ? 50 : (top / overflowY) * 100;
+        clampBackgroundPosition();
+        applyBg();
+      }
+
+      syncBoxToPosition();
+
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+      let startL = 0;
+      let startT = 0;
+
+      box.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startL = box.offsetLeft;
+        startT = box.offsetTop;
+        item.classList.add('editing');
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+
+        const { rect } = getCoverViewportRect();
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        let nextLeft = startL + dx;
+        let nextTop = startT + dy;
+
+        nextLeft = Math.max(0, Math.min(nextLeft, rect.width - box.offsetWidth));
+        nextTop = Math.max(0, Math.min(nextTop, rect.height - box.offsetHeight));
+
+        box.style.left = nextLeft + 'px';
+        box.style.top = nextTop + 'px';
+        syncPosition();
+      });
+
+      document.addEventListener('mouseup', async () => {
+        if (!isDragging) return;
+        isDragging = false;
+        item.classList.remove('editing');
+        await saveBgSettings();
+      });
+    }
+
+    window.addEventListener('resize', () => {
+      if (typeof activeCropBoxSync === 'function') {
+        activeCropBoxSync();
+      }
+    });
+
+    document.getElementById("deleteCurrentBgBtn").addEventListener("click", async () => {
         if (!selectedBgFilename) {
           await showAlert('请先选择一张图片', { title: '提示', confirmText: '好的' });
           return;

@@ -197,11 +197,14 @@ app.get('/api/background', (req, res) => {
 // Save background settings
 app.post('/api/background', (req, res) => {
   try {
-    const { filename, blur, dim } = req.body;
+    const { filename, blur, dim, positionX, positionY } = req.body;
     if (filename === undefined || blur === undefined || dim === undefined) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    fs.writeFileSync(BACKGROUND_FILE, JSON.stringify({ filename, blur, dim }, null, 2), 'utf8');
+    const bgData = { filename, blur, dim };
+    if (positionX !== undefined) bgData.positionX = positionX;
+    if (positionY !== undefined) bgData.positionY = positionY;
+    fs.writeFileSync(BACKGROUND_FILE, JSON.stringify(bgData, null, 2), 'utf8');
     res.json({ success: true });
   } catch (err) {
     console.error('Error saving background:', err);
