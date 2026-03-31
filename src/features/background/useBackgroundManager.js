@@ -11,6 +11,7 @@ export function useBackgroundManager({ openAlert, openConfirm }) {
   const saveTimeoutRef = useRef(null);
   const [images, setImages] = useState([]);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [bgBlur, setBgBlur] = useState(18);
   const [bgDim, setBgDim] = useState(52);
   const [bgPositionX, setBgPositionX] = useState(50);
@@ -49,7 +50,7 @@ export function useBackgroundManager({ openAlert, openConfirm }) {
 
   useEffect(() => {
     if (panelOpen) {
-      refreshImages();
+      void refreshImages();
     }
   }, [panelOpen, refreshImages]);
 
@@ -78,16 +79,35 @@ export function useBackgroundManager({ openAlert, openConfirm }) {
   }
 
   async function handleUploadBackground(file) {
+    setIsUploading(true);
+
     try {
       const payload = await uploadBackground(file);
+      setImages((current) => {
+        const nextItem = {
+          filename: payload.filename,
+          originalUrl: payload.originalUrl,
+          url: payload.url,
+          thumbUrl: payload.thumbUrl,
+          uploadedAt: Date.now(),
+        };
+
+        return [nextItem, ...current.filter((image) => image.filename !== payload.filename)];
+      });
       setBackgroundFromUrl(payload.url, payload.filename);
       setBgPositionX(50);
       setBgPositionY(50);
       scheduleBackgroundSave({ filename: payload.filename, positionX: 50, positionY: 50 });
-      refreshImages();
+      await refreshImages();
+
+      if (payload.warning) {
+        openAlert(`图片已上传，但处理时有提示：${payload.warning}`);
+      }
     } catch (error) {
       console.error("Upload background failed:", error);
       openAlert(`上传失败：${error.message}`);
+    } finally {
+      setIsUploading(false);
     }
   }
 
@@ -109,23 +129,28 @@ export function useBackgroundManager({ openAlert, openConfirm }) {
       return;
     }
 
-    openConfirm(`确认删除当前背景图“${currentBgFilename}”吗？`, async () => {
-      try {
-        await deleteBackground(currentBgFilename);
-        setBackgroundFromUrl("", "");
-        scheduleBackgroundSave({ filename: "" });
-        refreshImages();
-      } catch (error) {
-        console.error("Delete background failed:", error);
-        openAlert(`删除失败：${error.message}`);
-      }
-    }, "删除背景图");
+    openConfirm(
+      `确认删除当前背景图片“${currentBgFilename}”吗？`,
+      async () => {
+        try {
+          await deleteBackground(currentBgFilename);
+          setBackgroundFromUrl("", "");
+          scheduleBackgroundSave({ filename: "" });
+          await refreshImages();
+        } catch (error) {
+          console.error("Delete background failed:", error);
+          openAlert(`删除失败：${error.message}`);
+        }
+      },
+      "删除背景图片",
+    );
   }
 
   return {
     images,
     panelOpen,
     setPanelOpen,
+    isUploading,
     bgBlur,
     setBgBlur,
     bgDim,

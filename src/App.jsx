@@ -30,6 +30,7 @@ export default function App() {
     images,
     panelOpen,
     setPanelOpen,
+    isUploading,
     bgBlur,
     setBgBlur,
     bgDim,
@@ -121,6 +122,7 @@ export default function App() {
         blur={bgBlur}
         dim={bgDim}
         backgroundSettingsLoaded={backgroundSettingsLoaded}
+        isUploading={isUploading}
         onBlurChange={(value) => {
           setBgBlur(value);
           scheduleBackgroundSave({ blur: value });

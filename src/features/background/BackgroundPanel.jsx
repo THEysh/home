@@ -54,6 +54,7 @@ export default function BackgroundPanel({
   blur,
   dim,
   backgroundSettingsLoaded,
+  isUploading,
   onBlurChange,
   onDimChange,
   cropProps,
@@ -73,24 +74,38 @@ export default function BackgroundPanel({
       >
         <div className="bg-panel-header">
           <span className="bg-panel-title">背景图片管理</span>
-          <button className="bg-panel-close" onClick={onClose}>
+          <button className="bg-panel-close" type="button" onClick={onClose}>
             ×
           </button>
         </div>
-        <label className="upload-btn" onClick={() => fileInputRef.current?.click()}>
-          上传本地图片
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            style={{ display: "none" }}
-            onChange={(event) => {
-              const [file] = event.target.files || [];
-              if (file) onUpload(file);
-              event.target.value = "";
-            }}
-          />
-        </label>
+
+        <button
+          className={`upload-btn ${isUploading ? "uploading" : ""}`}
+          type="button"
+          disabled={isUploading}
+          onClick={() => {
+            if (!isUploading) {
+              fileInputRef.current?.click();
+            }
+          }}
+        >
+          {isUploading ? "上传中..." : "上传本地图片"}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          hidden
+          disabled={isUploading}
+          onChange={(event) => {
+            const [file] = event.target.files || [];
+            if (file) {
+              void onUpload(file);
+            }
+            event.target.value = "";
+          }}
+        />
+
         <div className="bg-image-list">
           {images.length ? (
             columns.map((column, index) => (
@@ -110,16 +125,17 @@ export default function BackgroundPanel({
             <div className="bg-no-images">暂无已上传的图片</div>
           )}
         </div>
-        <button className="delete-current-btn" onClick={onDeleteCurrent}>
+
+        <button className="delete-current-btn" type="button" onClick={onDeleteCurrent}>
           删除当前图片
         </button>
       </div>
 
       <div className="button-group">
-        <button className="bg-toggle-btn" title="管理背景" onClick={onOpen}>
+        <button className="bg-toggle-btn" type="button" title="管理背景" onClick={onOpen}>
           🖼
         </button>
-        <button className="bg-toggle-btn" title="随机页面图标" onClick={onRandomFavicon}>
+        <button className="bg-toggle-btn" type="button" title="随机页面图标" onClick={onRandomFavicon}>
           🎉
         </button>
       </div>

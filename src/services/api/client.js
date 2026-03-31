@@ -1,6 +1,11 @@
 async function parseResponse(response) {
   const contentType = response.headers.get("content-type") || "";
   if (!response.ok) {
+    if (contentType.includes("application/json")) {
+      const payload = await response.json().catch(() => null);
+      throw new Error(payload?.error || `Request failed: ${response.status}`);
+    }
+
     const text = await response.text();
     throw new Error(text || `Request failed: ${response.status}`);
   }

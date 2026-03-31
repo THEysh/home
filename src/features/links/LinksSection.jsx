@@ -72,12 +72,7 @@ export default function LinksSection({ open, links, onToggle, onAdd, onEdit, onD
       <div className={`links-grid-wrap ${open ? "open" : ""}`}>
         <div className="links-header">
           <span className="links-title">Quick Links</span>
-          <button className="add-btn" onClick={onAdd}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            添加
-          </button>
+
         </div>
         <div className="links-grid">
           {links.map((link) => (

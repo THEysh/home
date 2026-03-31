@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   search-home:
     image: theysh0303/search-home:latest
@@ -7,3 +5,4 @@ services:
     ports:
       - "39421:39421"
     restart: unless-stopped
+
