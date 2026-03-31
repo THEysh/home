@@ -9,6 +9,8 @@ import {
 
 export function useBackgroundManager({ openAlert, openConfirm }) {
   const saveTimeoutRef = useRef(null);
+  const originalImageUpgradeRef = useRef(null);
+  const processingPollRef = useRef(null);
   const [images, setImages] = useState([]);
   const [panelOpen, setPanelOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -25,10 +27,43 @@ export function useBackgroundManager({ openAlert, openConfirm }) {
     try {
       const payload = await getImages();
       setImages(payload);
+      return payload;
     } catch (error) {
       console.error("Failed to refresh images:", error);
+      return [];
     }
   }, []);
+
+  useEffect(() => {
+    if (!backgroundUrl) {
+      originalImageUpgradeRef.current = null;
+      return;
+    }
+
+    const upgrade = originalImageUpgradeRef.current;
+    if (!upgrade?.originalUrl || upgrade.originalUrl === backgroundUrl) {
+      return;
+    }
+
+    let cancelled = false;
+    const preload = new Image();
+    preload.onload = () => {
+      if (!cancelled && originalImageUpgradeRef.current?.filename === upgrade.filename) {
+        setBackgroundUrl(upgrade.originalUrl);
+        setBackgroundLoaded(true);
+      }
+    };
+    preload.onerror = () => {
+      if (!cancelled && originalImageUpgradeRef.current?.filename === upgrade.filename) {
+        console.error("Failed to preload original background image:", upgrade.originalUrl);
+      }
+    };
+    preload.src = upgrade.originalUrl;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [backgroundUrl]);
 
   useEffect(() => {
     getBackground()
@@ -38,11 +73,7 @@ export function useBackgroundManager({ openAlert, openConfirm }) {
         setBgDim(background.dim ?? 52);
         setBgPositionX(background.positionX ?? 50);
         setBgPositionY(background.positionY ?? 50);
-        setCurrentBgFilename(background.filename || "");
-        if (background.url) {
-          setBackgroundUrl(background.url);
-          setBackgroundLoaded(true);
-        }
+        setBackgroundFromImage(background, background.filename || "");
       })
       .catch((error) => console.error("Failed to load background:", error))
       .finally(() => setBackgroundSettingsLoaded(true));
@@ -53,6 +84,33 @@ export function useBackgroundManager({ openAlert, openConfirm }) {
       void refreshImages();
     }
   }, [panelOpen, refreshImages]);
+
+  useEffect(() => {
+    const hasProcessing = images.some((image) => image.status === "processing");
+
+    if (!hasProcessing) {
+      if (processingPollRef.current) {
+        clearInterval(processingPollRef.current);
+        processingPollRef.current = null;
+      }
+      return;
+    }
+
+    if (!processingPollRef.current) {
+      processingPollRef.current = setInterval(() => {
+        void refreshImages();
+      }, 1500);
+    }
+  }, [images, refreshImages]);
+
+  useEffect(() => {
+    return () => {
+      if (processingPollRef.current) {
+        clearInterval(processingPollRef.current);
+        processingPollRef.current = null;
+      }
+    };
+  }, []);
 
   const scheduleBackgroundSave = useCallback(
     (next = {}) => {
@@ -72,11 +130,44 @@ export function useBackgroundManager({ openAlert, openConfirm }) {
     [bgBlur, bgDim, bgPositionX, bgPositionY, currentBgFilename],
   );
 
-  function setBackgroundFromUrl(url, filename) {
-    setBackgroundUrl(url);
-    setBackgroundLoaded(Boolean(url));
+  function setBackgroundFromImage(image, filename) {
+    const displayUrl = image?.url || image?.displayUrl || image?.originalUrl || "";
+    const originalUrl = image?.originalUrl || "";
+    originalImageUpgradeRef.current = filename
+      ? {
+          filename,
+          originalUrl,
+        }
+      : null;
+    setBackgroundUrl(displayUrl);
+    setBackgroundLoaded(Boolean(displayUrl));
     setCurrentBgFilename(filename || "");
   }
+
+  useEffect(() => {
+    if (!currentBgFilename) {
+      return;
+    }
+
+    const currentImage = images.find((image) => image.filename === currentBgFilename);
+    if (!currentImage) {
+      return;
+    }
+
+    const preferredUrl = currentImage.url || currentImage.originalUrl || "";
+    if (!preferredUrl) {
+      return;
+    }
+
+    if (currentImage.status === "ready" && backgroundUrl !== currentImage.originalUrl) {
+      setBackgroundFromImage(currentImage, currentImage.filename);
+      return;
+    }
+
+    if (currentImage.status === "processing" && backgroundUrl !== preferredUrl) {
+      setBackgroundFromImage(currentImage, currentImage.filename);
+    }
+  }, [backgroundUrl, currentBgFilename, images]);
 
   async function handleUploadBackground(file) {
     setIsUploading(true);
@@ -89,16 +180,18 @@ export function useBackgroundManager({ openAlert, openConfirm }) {
           originalUrl: payload.originalUrl,
           url: payload.url,
           thumbUrl: payload.thumbUrl,
+          status: payload.status || "processing",
+          errorMessage: payload.errorMessage || "",
           uploadedAt: Date.now(),
         };
 
         return [nextItem, ...current.filter((image) => image.filename !== payload.filename)];
       });
-      setBackgroundFromUrl(payload.url, payload.filename);
+      setBackgroundFromImage(payload, payload.filename);
       setBgPositionX(50);
       setBgPositionY(50);
       scheduleBackgroundSave({ filename: payload.filename, positionX: 50, positionY: 50 });
-      await refreshImages();
+      void refreshImages();
 
       if (payload.warning) {
         openAlert(`图片已上传，但处理时有提示：${payload.warning}`);
@@ -116,8 +209,7 @@ export function useBackgroundManager({ openAlert, openConfirm }) {
       return;
     }
 
-    const displayUrl = image.url || image.displayUrl || image.originalUrl;
-    setBackgroundFromUrl(displayUrl, image.filename);
+    setBackgroundFromImage(image, image.filename);
     setBgPositionX(50);
     setBgPositionY(50);
     scheduleBackgroundSave({ filename: image.filename, positionX: 50, positionY: 50 });
@@ -134,7 +226,7 @@ export function useBackgroundManager({ openAlert, openConfirm }) {
       async () => {
         try {
           await deleteBackground(currentBgFilename);
-          setBackgroundFromUrl("", "");
+          setBackgroundFromImage(null, "");
           scheduleBackgroundSave({ filename: "" });
           await refreshImages();
         } catch (error) {

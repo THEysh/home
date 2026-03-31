@@ -631,6 +631,15 @@ body::-webkit-scrollbar {
   overflow: hidden;
 }
 
+.bg-image-item.processing::after,
+.bg-image-item.failed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 12, 24, 0.06), rgba(8, 12, 24, 0.28));
+  pointer-events: none;
+}
+
 .bg-image-item.active {
   border-color: var(--accent);
 }
@@ -638,6 +647,27 @@ body::-webkit-scrollbar {
 .bg-image-item img {
   width: 100%;
   display: block;
+}
+
+.bg-image-status {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 2;
+  padding: 0.2rem 0.48rem;
+  border: 1px solid rgba(120, 170, 255, 0.34);
+  border-radius: 999px;
+  background: rgba(10, 16, 32, 0.58);
+  color: rgba(198, 222, 255, 0.92);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.bg-image-status.failed {
+  border-color: rgba(255, 120, 120, 0.34);
+  color: rgba(255, 196, 196, 0.95);
 }
 
 .crop-overlay {

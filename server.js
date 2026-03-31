@@ -21,9 +21,17 @@ const DIST_DIR = path.join(DATA_DIR, "dist");
 const LINKS_FILE = path.join(DATA_DIR, "links.json");
 const BACKGROUND_FILE = path.join(DATA_DIR, "background.json");
 
-const DISPLAY_MAX_WIDTH = 2560;
+const DISPLAY_MAX_WIDTH = 1920;
 const THUMB_WIDTH = 360;
 const OUTPUT_QUALITY = 82;
+const IMAGE_STATUS = {
+  PROCESSING: "processing",
+  READY: "ready",
+  FAILED: "failed",
+};
+const imageProcessingState = new Map();
+const imageProcessingQueue = [];
+let activeImageTask = null;
 
 function logInfo(scope, message, extra) {
   if (extra !== undefined) {
@@ -187,6 +195,7 @@ function initializeFiles() {
 }
 
 initializeFiles();
+enqueuePendingImagesOnStartup();
 
 function isImageFilename(filename) {
   return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(filename);
@@ -207,20 +216,153 @@ function getVariantPaths(filename) {
 
 function getImageUrls(filename) {
   const baseName = getImageBaseName(filename);
-  const { displayPath, thumbPath } = getVariantPaths(filename);
+  const { displayPath, thumbPath, originalPath } = getVariantPaths(filename);
   const hasDisplay = fs.existsSync(displayPath);
   const hasThumb = fs.existsSync(thumbPath);
-  const hasOriginal = fs.existsSync(path.join(ORIGINALS_DIR, filename));
+  const hasOriginal = fs.existsSync(originalPath);
+  const originalUrl = hasOriginal ? `/uploads/originals/${filename}` : `/uploads/${filename}`;
+  const displayUrl = hasDisplay ? `/uploads/display/${baseName}.jpg` : "";
+  const thumbUrl = hasThumb ? `/uploads/thumbs/${baseName}.jpg` : "";
 
   return {
-    originalUrl: hasOriginal ? `/uploads/originals/${filename}` : `/uploads/${filename}`,
-    url: hasDisplay ? `/uploads/display/${baseName}.jpg` : `/uploads/${filename}`,
-    thumbUrl: hasThumb
-      ? `/uploads/thumbs/${baseName}.jpg`
-      : hasDisplay
-        ? `/uploads/display/${baseName}.jpg`
-        : `/uploads/${filename}`,
+    originalUrl,
+    url: displayUrl,
+    thumbUrl,
   };
+}
+
+function getImageStatus(filename) {
+  const { displayPath, thumbPath, originalPath } = getVariantPaths(filename);
+  const taskState = imageProcessingState.get(filename);
+
+  if (taskState?.status === IMAGE_STATUS.FAILED) {
+    return {
+      status: IMAGE_STATUS.FAILED,
+      errorMessage: taskState.errorMessage || "",
+    };
+  }
+
+  if (fs.existsSync(originalPath) && fs.existsSync(displayPath) && fs.existsSync(thumbPath)) {
+    if (taskState?.status !== IMAGE_STATUS.READY) {
+      imageProcessingState.set(filename, {
+        status: IMAGE_STATUS.READY,
+        errorMessage: "",
+      });
+    }
+
+    return {
+      status: IMAGE_STATUS.READY,
+      errorMessage: "",
+    };
+  }
+
+  if (taskState) {
+    return {
+      status: taskState.status,
+      errorMessage: taskState.errorMessage || "",
+    };
+  }
+
+  if (fs.existsSync(originalPath)) {
+    return {
+      status: IMAGE_STATUS.PROCESSING,
+      errorMessage: "",
+    };
+  }
+
+  return {
+    status: IMAGE_STATUS.READY,
+    errorMessage: "",
+  };
+}
+
+function buildImageRecord(filename, sourcePath) {
+  return {
+    filename,
+    ...getImageUrls(filename),
+    ...getImageStatus(filename),
+    uploadedAt: fs.statSync(sourcePath).mtime.getTime(),
+  };
+}
+
+function scheduleNextImageTask() {
+  if (activeImageTask || !imageProcessingQueue.length) {
+    return;
+  }
+
+  activeImageTask = imageProcessingQueue.shift();
+  setImmediate(async () => {
+    const task = activeImageTask;
+    if (!task) {
+      return;
+    }
+
+    try {
+      logInfo("upload", "Starting queued image processing task", {
+        filename: task.filename,
+        remainingQueueLength: imageProcessingQueue.length,
+      });
+      await generateImageVariants(task.filePath, task.filename);
+      imageProcessingState.set(task.filename, {
+        status: IMAGE_STATUS.READY,
+        errorMessage: "",
+      });
+      logInfo("upload", "Completed queued image processing task", { filename: task.filename });
+    } catch (error) {
+      imageProcessingState.set(task.filename, {
+        status: IMAGE_STATUS.FAILED,
+        errorMessage: error.message || "Image processing failed",
+      });
+      logError("upload", `Queued image processing failed for ${task.filename}`, error);
+    } finally {
+      activeImageTask = null;
+      scheduleNextImageTask();
+    }
+  });
+}
+
+function enqueueImageProcessing(filename, filePath) {
+  const duplicateTask =
+    activeImageTask?.filename === filename ||
+    imageProcessingQueue.some((task) => task.filename === filename);
+
+  imageProcessingState.set(filename, {
+    status: IMAGE_STATUS.PROCESSING,
+    errorMessage: "",
+  });
+
+  if (duplicateTask) {
+    logInfo("upload", "Skipped duplicate image processing enqueue", { filename });
+    return;
+  }
+
+  imageProcessingQueue.push({ filename, filePath });
+  logInfo("upload", "Queued image processing task", {
+    filename,
+    queueLength: imageProcessingQueue.length,
+  });
+  scheduleNextImageTask();
+}
+
+function enqueuePendingImagesOnStartup() {
+  if (!fs.existsSync(ORIGINALS_DIR)) {
+    return;
+  }
+
+  fs.readdirSync(ORIGINALS_DIR)
+    .filter(isImageFilename)
+    .forEach((filename) => {
+      const { originalPath, displayPath, thumbPath } = getVariantPaths(filename);
+      if (fs.existsSync(displayPath) && fs.existsSync(thumbPath)) {
+        imageProcessingState.set(filename, {
+          status: IMAGE_STATUS.READY,
+          errorMessage: "",
+        });
+        return;
+      }
+
+      enqueueImageProcessing(filename, originalPath);
+    });
 }
 
 async function generateImageVariants(filePath, filename) {
@@ -338,7 +480,21 @@ app.post("/api/links", (req, res) => {
 app.get("/api/background", (req, res) => {
   try {
     const background = JSON.parse(fs.readFileSync(BACKGROUND_FILE, "utf8"));
-    res.json({ ...background, ...(background.filename ? getImageUrls(background.filename) : {}) });
+    if (!background.filename) {
+      res.json(background);
+      return;
+    }
+
+    const { originalPath } = getVariantPaths(background.filename);
+    if (!fs.existsSync(originalPath)) {
+      res.json(background);
+      return;
+    }
+
+    res.json({
+      ...background,
+      ...buildImageRecord(background.filename, originalPath),
+    });
   } catch (error) {
     logError("background", "Error reading background settings", error);
     res.status(500).json({ error: "Failed to read background settings" });
@@ -365,7 +521,7 @@ app.post("/api/background", (req, res) => {
   }
 });
 
-app.post("/api/upload", upload.single("image"), async (req, res) => {
+app.post("/api/upload", upload.single("image"), (req, res) => {
   logInfo("upload", "Incoming upload request", {
     ip: req.ip,
     contentType: req.headers["content-type"],
@@ -390,22 +546,24 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
   });
 
   try {
-    await generateImageVariants(filePath, filename);
-    const urls = getImageUrls(filename);
-    logInfo("upload", "Upload finished successfully", {
+    enqueueImageProcessing(filename, filePath);
+    const image = buildImageRecord(filename, filePath);
+    logInfo("upload", "Upload accepted for async processing", {
       filename,
-      urls,
+      status: image.status,
     });
-    res.json({ success: true, filename, ...urls });
+    res.json({ success: true, ...image });
   } catch (error) {
-    logError("upload", `Error generating image variants for ${filename}`, error);
+    logError("upload", `Error queueing image processing for ${filename}`, error);
     const fallback = {
       success: true,
       filename,
-      warning: "Thumbnail generation failed, using original image.",
-      url: `/uploads/originals/${filename}`,
-      thumbUrl: `/uploads/originals/${filename}`,
+      warning: "Image processing queue failed, using original image.",
       originalUrl: `/uploads/originals/${filename}`,
+      url: "",
+      thumbUrl: "",
+      status: IMAGE_STATUS.FAILED,
+      errorMessage: error.message || "Image processing queue failed",
     };
     logInfo("upload", "Returning upload fallback response", fallback);
     res.json(fallback);
@@ -428,11 +586,7 @@ app.get("/api/images", (req, res) => {
         const legacyPath = path.join(UPLOADS_DIR, filename);
         const sourcePath = fs.existsSync(originalPath) ? originalPath : legacyPath;
 
-        return {
-          filename,
-          ...getImageUrls(filename),
-          uploadedAt: fs.statSync(sourcePath).mtime.getTime(),
-        };
+        return buildImageRecord(filename, sourcePath);
       })
       .sort((a, b) => b.uploadedAt - a.uploadedAt);
 
@@ -463,6 +617,11 @@ app.delete("/api/upload/:filename", (req, res) => {
     [originalPath, displayPath, thumbPath, legacyPath].forEach((filePath) => {
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     });
+    const queuedIndex = imageProcessingQueue.findIndex((task) => task.filename === filename);
+    if (queuedIndex >= 0) {
+      imageProcessingQueue.splice(queuedIndex, 1);
+    }
+    imageProcessingState.delete(filename);
 
     const background = JSON.parse(fs.readFileSync(BACKGROUND_FILE, "utf8"));
     if (background.filename === filename) {

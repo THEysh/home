@@ -3,10 +3,14 @@ import CropPreview from "./CropPreview";
 
 function BackgroundImageItem({ image, active, onSelect, cropProps }) {
   const imageRef = useRef(null);
-  const [src, setSrc] = useState(image.thumbUrl || image.url);
+  const [src, setSrc] = useState(image.thumbUrl || image.url || image.originalUrl || "");
 
   useEffect(() => {
-    const displaySrc = image.url || image.displayUrl || image.originalUrl;
+    setSrc(image.thumbUrl || image.url || image.originalUrl || "");
+  }, [image.filename, image.thumbUrl, image.url, image.originalUrl]);
+
+  useEffect(() => {
+    const displaySrc = image.url;
     if (!displaySrc || displaySrc === src) return;
 
     let cancelled = false;
@@ -23,12 +27,14 @@ function BackgroundImageItem({ image, active, onSelect, cropProps }) {
 
   return (
     <div
-      className={`bg-image-item ${active ? "active editing" : ""}`}
+      className={`bg-image-item ${active ? "active editing" : ""} ${image.status || ""}`}
       onClick={() => {
         if (!active) onSelect();
       }}
     >
       <img ref={imageRef} src={src} alt="" loading="lazy" decoding="async" />
+      {image.status === "processing" ? <span className="bg-image-status">处理中</span> : null}
+      {image.status === "failed" ? <span className="bg-image-status failed">处理失败</span> : null}
       {active ? (
         <CropPreview
           imageRef={imageRef}
@@ -133,7 +139,7 @@ export default function BackgroundPanel({
 
       <div className="button-group">
         <button className="bg-toggle-btn" type="button" title="管理背景" onClick={onOpen}>
-          🖼
+          🎨
         </button>
         <button className="bg-toggle-btn" type="button" title="随机页面图标" onClick={onRandomFavicon}>
           🎉
