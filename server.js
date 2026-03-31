@@ -48,6 +48,14 @@ const defaultLinks = [
   { name: "Bilibili", url: "https://www.bilibili.com", icon: "\u{1F3AC}", cat: "娱乐" },
 ];
 
+const defaultBackground = {
+  filename: "",
+  blur: 18,
+  dim: 52,
+  positionX: 50,
+  positionY: 50,
+};
+
 function initializeFiles() {
   [UPLOADS_DIR, ORIGINALS_DIR, DISPLAY_DIR, THUMBS_DIR].forEach((dir) => {
     if (!fs.existsSync(dir)) {
@@ -62,11 +70,7 @@ function initializeFiles() {
   }
 
   if (!fs.existsSync(BACKGROUND_FILE)) {
-    fs.writeFileSync(
-      BACKGROUND_FILE,
-      JSON.stringify({ filename: "", blur: 18, dim: 52, positionX: 50, positionY: 50 }, null, 2),
-      "utf8",
-    );
+    fs.writeFileSync(BACKGROUND_FILE, JSON.stringify(defaultBackground, null, 2), "utf8");
     console.log("Created background.json with default values");
   }
 }

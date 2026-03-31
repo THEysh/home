@@ -28,9 +28,11 @@
 ├─ index.html            # Vite 入口 HTML
 ├─ vite.config.js        # Vite 配置
 ├─ server.js             # Express API 与 dist 托管
-├─ uploads/              # 上传图片及派生图
-├─ links.json            # 快捷链接持久化
-├─ background.json       # 背景配置持久化
+├─ uploads/              # 本地运行期图片目录（已忽略）
+├─ links.json            # 本地快捷链接数据（已忽略）
+├─ background.json       # 本地背景配置（已忽略）
+├─ links.example.json    # 快捷链接示例配置
+├─ background.example.json # 背景配置示例
 └─ emoji_data.json       # Emoji 数据
 ```
 
@@ -85,4 +87,5 @@ Express 会继续提供 API，同时托管前端构建产物。
 
 - 图片上传后会自动生成 `display` 和 `thumb` 两种派生图。
 - 背景裁剪框按当前窗口宽高比计算，并在窗口尺寸变化时自动重算位置。
-- 仓库里可能存在运行期文件，例如 `uploads/*`、`background.json` 等，它们不是前端源码的一部分。
+- `links.json`、`background.json` 和 `uploads/` 属于本地运行期数据，默认不纳入 git。
+- 新环境首次启动时，服务端会自动生成缺失的本地数据文件。

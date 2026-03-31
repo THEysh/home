@@ -7,3 +7,6 @@ node_modules
 dist
 nul
 temp_check.js
+uploads/
+links.json
+background.json
