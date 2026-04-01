@@ -378,3 +378,26 @@ cp background.example.json background.json
 ## License
 
 MIT
+
+## COS environment
+
+If you want to store uploaded background images in Tencent COS instead of local disk, create a `.env` file next to `docker-compose.yml` and fill it from `.env.example`.
+
+Required variables:
+
+```env
+COS_BUCKET=theysh-1321988599
+COS_REGION=ap-chongqing
+COS_BASE_URL=https://theysh-1321988599.cos.ap-chongqing.myqcloud.com
+COS_SECRET_ID=your-secret-id
+COS_SECRET_KEY=your-secret-key
+```
+
+Optional style variables:
+
+```env
+COS_STYLE_DISPLAY=imageMogr2/auto-orient/thumbnail/1920x>/format/jpg/interlace/1
+COS_STYLE_THUMB=imageMogr2/auto-orient/thumbnail/360x>/format/jpg/interlace/1
+```
+
+When these variables are present, the backend uploads only the original image to COS and builds `originalUrl`, `url`, and `thumbUrl` from COS URLs.

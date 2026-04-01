@@ -9,7 +9,6 @@ import {
 
 export function useBackgroundManager({ openAlert, openConfirm }) {
   const saveTimeoutRef = useRef(null);
-  const originalImageUpgradeRef = useRef(null);
   const processingPollRef = useRef(null);
   const [images, setImages] = useState([]);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -33,37 +32,6 @@ export function useBackgroundManager({ openAlert, openConfirm }) {
       return [];
     }
   }, []);
-
-  useEffect(() => {
-    if (!backgroundUrl) {
-      originalImageUpgradeRef.current = null;
-      return;
-    }
-
-    const upgrade = originalImageUpgradeRef.current;
-    if (!upgrade?.originalUrl || upgrade.originalUrl === backgroundUrl) {
-      return;
-    }
-
-    let cancelled = false;
-    const preload = new Image();
-    preload.onload = () => {
-      if (!cancelled && originalImageUpgradeRef.current?.filename === upgrade.filename) {
-        setBackgroundUrl(upgrade.originalUrl);
-        setBackgroundLoaded(true);
-      }
-    };
-    preload.onerror = () => {
-      if (!cancelled && originalImageUpgradeRef.current?.filename === upgrade.filename) {
-        console.error("Failed to preload original background image:", upgrade.originalUrl);
-      }
-    };
-    preload.src = upgrade.originalUrl;
-
-    return () => {
-      cancelled = true;
-    };
-  }, [backgroundUrl]);
 
   useEffect(() => {
     getBackground()
@@ -131,16 +99,9 @@ export function useBackgroundManager({ openAlert, openConfirm }) {
   );
 
   function setBackgroundFromImage(image, filename) {
-    const displayUrl = image?.url || image?.displayUrl || image?.originalUrl || "";
-    const originalUrl = image?.originalUrl || "";
-    originalImageUpgradeRef.current = filename
-      ? {
-          filename,
-          originalUrl,
-        }
-      : null;
-    setBackgroundUrl(displayUrl);
-    setBackgroundLoaded(Boolean(displayUrl));
+    const originalUrl = image?.originalUrl || image?.url || image?.displayUrl || "";
+    setBackgroundUrl(originalUrl);
+    setBackgroundLoaded(Boolean(originalUrl));
     setCurrentBgFilename(filename || "");
   }
 
@@ -154,17 +115,12 @@ export function useBackgroundManager({ openAlert, openConfirm }) {
       return;
     }
 
-    const preferredUrl = currentImage.url || currentImage.originalUrl || "";
-    if (!preferredUrl) {
+    const originalUrl = currentImage.originalUrl || currentImage.url || "";
+    if (!originalUrl) {
       return;
     }
 
-    if (currentImage.status === "ready" && backgroundUrl !== currentImage.originalUrl) {
-      setBackgroundFromImage(currentImage, currentImage.filename);
-      return;
-    }
-
-    if (currentImage.status === "processing" && backgroundUrl !== preferredUrl) {
+    if (backgroundUrl !== originalUrl) {
       setBackgroundFromImage(currentImage, currentImage.filename);
     }
   }, [backgroundUrl, currentBgFilename, images]);

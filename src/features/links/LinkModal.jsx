@@ -109,9 +109,7 @@ export default function LinkModal({
               {emojiPickerOpen ? (
                 <EmojiPicker
                   categories={categories}
-                  activeCategory={activeCategory}
                   selectedEmoji={selectedEmoji}
-                  onCategoryChange={onCategoryChange}
                   onEmojiSelect={onEmojiSelect}
                 />
               ) : null}

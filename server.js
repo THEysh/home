@@ -4,6 +4,7 @@ const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
 const sharp = require("sharp");
+const COS = require("cos-nodejs-sdk-v5");
 
 const app = express();
 const PORT = 39421;
@@ -20,15 +21,42 @@ const THUMBS_DIR = path.join(UPLOADS_DIR, "thumbs");
 const DIST_DIR = path.join(DATA_DIR, "dist");
 const LINKS_FILE = path.join(DATA_DIR, "links.json");
 const BACKGROUND_FILE = path.join(DATA_DIR, "background.json");
+const IMAGES_FILE = path.join(DATA_DIR, "images.json");
 
 const DISPLAY_MAX_WIDTH = 1920;
 const THUMB_WIDTH = 360;
 const OUTPUT_QUALITY = 82;
+const IMAGE_CACHE_CONTROL = "public, max-age=2592000, immutable";
 const IMAGE_STATUS = {
   PROCESSING: "processing",
   READY: "ready",
   FAILED: "failed",
 };
+
+const COS_BUCKET = process.env.COS_BUCKET || "";
+const COS_REGION = process.env.COS_REGION || "";
+const COS_SECRET_ID = process.env.COS_SECRET_ID || "";
+const COS_SECRET_KEY = process.env.COS_SECRET_KEY || "";
+const COS_BASE_URL =
+  process.env.COS_BASE_URL ||
+  (COS_BUCKET && COS_REGION
+    ? `https://${COS_BUCKET}.cos.${COS_REGION}.myqcloud.com`
+    : "");
+const COS_STYLE_DISPLAY =
+  process.env.COS_STYLE_DISPLAY || "imageMogr2/auto-orient/thumbnail/1920x>/format/jpg/interlace/1";
+const COS_STYLE_THUMB =
+  process.env.COS_STYLE_THUMB || "imageMogr2/auto-orient/thumbnail/360x>/format/jpg/interlace/1";
+
+const isCosEnabled = Boolean(
+  COS_BUCKET && COS_REGION && COS_SECRET_ID && COS_SECRET_KEY && COS_BASE_URL,
+);
+const cosClient = isCosEnabled
+  ? new COS({
+      SecretId: COS_SECRET_ID,
+      SecretKey: COS_SECRET_KEY,
+    })
+  : null;
+
 const imageProcessingState = new Map();
 const imageProcessingQueue = [];
 let activeImageTask = null;
@@ -55,7 +83,7 @@ app.use(
     maxAge: "30d",
     immutable: true,
     setHeaders: (res) => {
-      res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
+      res.setHeader("Cache-Control", IMAGE_CACHE_CONTROL);
     },
   }),
 );
@@ -66,53 +94,53 @@ if (fs.existsSync(DIST_DIR)) {
 
 const defaultLinks = [
   {
-    "id": 1774710500001,
-    "name": "GitHub",
-    "url": "https://github.com",
-    "icon": "🐙",
-    "cat": "",
-    "useEmoji": true
+    id: 1774710500001,
+    name: "GitHub",
+    url: "https://github.com",
+    icon: "",
+    cat: "",
+    useEmoji: true,
   },
   {
-    "id": 1774710500002,
-    "name": "ChatGPT",
-    "url": "https://chatgpt.com",
-    "icon": "💬",
-    "cat": "",
-    "useEmoji": true
+    id: 1774710500002,
+    name: "ChatGPT",
+    url: "https://chatgpt.com",
+    icon: "",
+    cat: "",
+    useEmoji: true,
   },
   {
-    "id": 1774710500003,
-    "name": "DeepSeek",
-    "url": "https://www.deepseek.com",
-    "icon": "🐳",
-    "cat": "",
-    "useEmoji": true
+    id: 1774710500003,
+    name: "DeepSeek",
+    url: "https://www.deepseek.com",
+    icon: "",
+    cat: "",
+    useEmoji: true,
   },
   {
-    "id": 1774710500004,
-    "name": "哔哩哔哩 (B站)",
-    "url": "https://www.bilibili.com",
-    "icon": "📺",
-    "cat": "",
-    "useEmoji": true
+    id: 1774710500004,
+    name: "\u54d4\u54e9\u54d4\u54e9 (B\u7ad9)",
+    url: "https://www.bilibili.com",
+    icon: "",
+    cat: "",
+    useEmoji: true,
   },
   {
-    "id": 1774710500005,
-    "name": "聚合图床 (Superbed)",
-    "url": "https://www.superbed.cn/",
-    "icon": "🖼️",
-    "cat": "",
-    "useEmoji": true
+    id: 1774710500005,
+    name: "\u805a\u5408\u56fe\u5e8a (Superbed)",
+    url: "https://www.superbed.cn/",
+    icon: "",
+    cat: "",
+    useEmoji: true,
   },
   {
-    "id": 1774710500007,
-    "name": "超星通行证",
-    "url": "https://passport2.chaoxing.com/login?fid=&refer=",
-    "icon": "📚",
-    "cat": "",
-    "useEmoji": true
-  }
+    id: 1774710500007,
+    name: "\u8d85\u661f\u901a\u884c\u8bc1",
+    url: "https://passport2.chaoxing.com/login?fid=&refer=",
+    icon: "",
+    cat: "",
+    useEmoji: true,
+  },
 ];
 
 const defaultBackground = {
@@ -125,7 +153,7 @@ const defaultBackground = {
 
 function normalizeLinksForStorage(links) {
   if (!Array.isArray(links)) {
-    return defaultLinks;
+    return { normalized: defaultLinks, changed: true };
   }
 
   let nextId = Date.now();
@@ -162,6 +190,69 @@ function normalizeLinksForStorage(links) {
   return { normalized, changed };
 }
 
+function normalizeImagesIndex(items) {
+  if (!Array.isArray(items)) {
+    return { normalized: [], changed: true };
+  }
+
+  let changed = false;
+  const normalized = items
+    .map((item) => {
+      const safeItem = item && typeof item === "object" ? item : {};
+      const filename = typeof safeItem.filename === "string" ? safeItem.filename : "";
+      const uploadedAt =
+        typeof safeItem.uploadedAt === "number" && Number.isFinite(safeItem.uploadedAt)
+          ? safeItem.uploadedAt
+          : Date.now();
+
+      if (!filename) {
+        changed = true;
+        return null;
+      }
+
+      if (filename !== safeItem.filename || uploadedAt !== safeItem.uploadedAt) {
+        changed = true;
+      }
+
+      return { filename, uploadedAt };
+    })
+    .filter(Boolean);
+
+  return { normalized, changed };
+}
+
+function readJsonFile(filePath, fallbackValue) {
+  if (!fs.existsSync(filePath)) {
+    return fallbackValue;
+  }
+
+  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
+function readImagesIndex() {
+  const payload = readJsonFile(IMAGES_FILE, []);
+  const { normalized, changed } = normalizeImagesIndex(payload);
+  if (changed) {
+    fs.writeFileSync(IMAGES_FILE, JSON.stringify(normalized, null, 2), "utf8");
+  }
+  return normalized;
+}
+
+function saveImagesIndex(items) {
+  fs.writeFileSync(IMAGES_FILE, JSON.stringify(items, null, 2), "utf8");
+}
+
+function upsertImageIndex(filename, uploadedAt = Date.now()) {
+  const images = readImagesIndex().filter((item) => item.filename !== filename);
+  images.unshift({ filename, uploadedAt });
+  saveImagesIndex(images);
+}
+
+function removeImageFromIndex(filename) {
+  const images = readImagesIndex().filter((item) => item.filename !== filename);
+  saveImagesIndex(images);
+}
+
 function initializeFiles() {
   [UPLOADS_DIR, ORIGINALS_DIR, DISPLAY_DIR, THUMBS_DIR].forEach((dir) => {
     if (!fs.existsSync(dir)) {
@@ -175,8 +266,7 @@ function initializeFiles() {
     logInfo("init", "Created links.json with default links");
   } else {
     try {
-      const currentLinks = JSON.parse(fs.readFileSync(LINKS_FILE, "utf8"));
-      const { normalized, changed } = normalizeLinksForStorage(currentLinks);
+      const { normalized, changed } = normalizeLinksForStorage(readJsonFile(LINKS_FILE, []));
       if (changed) {
         fs.writeFileSync(LINKS_FILE, JSON.stringify(normalized, null, 2), "utf8");
         logInfo("init", "Normalized existing links.json structure");
@@ -184,7 +274,6 @@ function initializeFiles() {
     } catch (error) {
       logError("init", "Failed to normalize existing links.json, resetting to defaults", error);
       fs.writeFileSync(LINKS_FILE, JSON.stringify(defaultLinks, null, 2), "utf8");
-      logInfo("init", "Reset links.json to default links");
     }
   }
 
@@ -192,10 +281,20 @@ function initializeFiles() {
     fs.writeFileSync(BACKGROUND_FILE, JSON.stringify(defaultBackground, null, 2), "utf8");
     logInfo("init", "Created background.json with default values");
   }
+
+  if (!fs.existsSync(IMAGES_FILE)) {
+    fs.writeFileSync(IMAGES_FILE, "[]", "utf8");
+    logInfo("init", "Created images.json");
+  } else {
+    const { normalized, changed } = normalizeImagesIndex(readJsonFile(IMAGES_FILE, []));
+    if (changed) {
+      fs.writeFileSync(IMAGES_FILE, JSON.stringify(normalized, null, 2), "utf8");
+      logInfo("init", "Normalized images.json structure");
+    }
+  }
 }
 
 initializeFiles();
-enqueuePendingImagesOnStartup();
 
 function isImageFilename(filename) {
   return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(filename);
@@ -214,7 +313,30 @@ function getVariantPaths(filename) {
   };
 }
 
-function getImageUrls(filename) {
+function encodeObjectKey(key) {
+  return key
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+}
+
+function appendCosStyle(url, styleValue) {
+  if (!styleValue) {
+    return url;
+  }
+  return `${url}?${styleValue}`;
+}
+
+function getCosImageUrls(filename) {
+  const originalUrl = `${COS_BASE_URL}/${encodeObjectKey(filename)}`;
+  return {
+    originalUrl,
+    url: appendCosStyle(originalUrl, COS_STYLE_DISPLAY),
+    thumbUrl: appendCosStyle(originalUrl, COS_STYLE_THUMB),
+  };
+}
+
+function getLocalImageUrls(filename) {
   const baseName = getImageBaseName(filename);
   const { displayPath, thumbPath, originalPath } = getVariantPaths(filename);
   const hasDisplay = fs.existsSync(displayPath);
@@ -231,7 +353,18 @@ function getImageUrls(filename) {
   };
 }
 
+function getImageUrls(filename) {
+  return isCosEnabled ? getCosImageUrls(filename) : getLocalImageUrls(filename);
+}
+
 function getImageStatus(filename) {
+  if (isCosEnabled) {
+    return {
+      status: IMAGE_STATUS.READY,
+      errorMessage: "",
+    };
+  }
+
   const { displayPath, thumbPath, originalPath } = getVariantPaths(filename);
   const taskState = imageProcessingState.get(filename);
 
@@ -276,17 +409,22 @@ function getImageStatus(filename) {
   };
 }
 
-function buildImageRecord(filename, sourcePath) {
+function buildImageRecord(filename, sourcePathOrUploadedAt) {
+  const uploadedAt =
+    typeof sourcePathOrUploadedAt === "number"
+      ? sourcePathOrUploadedAt
+      : fs.statSync(sourcePathOrUploadedAt).mtime.getTime();
+
   return {
     filename,
     ...getImageUrls(filename),
     ...getImageStatus(filename),
-    uploadedAt: fs.statSync(sourcePath).mtime.getTime(),
+    uploadedAt,
   };
 }
 
 function scheduleNextImageTask() {
-  if (activeImageTask || !imageProcessingQueue.length) {
+  if (isCosEnabled || activeImageTask || !imageProcessingQueue.length) {
     return;
   }
 
@@ -322,6 +460,10 @@ function scheduleNextImageTask() {
 }
 
 function enqueueImageProcessing(filename, filePath) {
+  if (isCosEnabled) {
+    return;
+  }
+
   const duplicateTask =
     activeImageTask?.filename === filename ||
     imageProcessingQueue.some((task) => task.filename === filename);
@@ -345,7 +487,7 @@ function enqueueImageProcessing(filename, filePath) {
 }
 
 function enqueuePendingImagesOnStartup() {
-  if (!fs.existsSync(ORIGINALS_DIR)) {
+  if (isCosEnabled || !fs.existsSync(ORIGINALS_DIR)) {
     return;
   }
 
@@ -365,18 +507,15 @@ function enqueuePendingImagesOnStartup() {
     });
 }
 
+enqueuePendingImagesOnStartup();
+
 async function generateImageVariants(filePath, filename) {
   const { displayPath, thumbPath } = getVariantPaths(filename);
 
   [DISPLAY_DIR, THUMBS_DIR].forEach((dir) => {
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  });
-
-  logInfo("upload", "Generating image variants", {
-    filename,
-    filePath,
-    displayPath,
-    thumbPath,
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
   });
 
   const baseOptions = { animated: false };
@@ -387,36 +526,68 @@ async function generateImageVariants(filePath, filename) {
     .jpeg({ quality: OUTPUT_QUALITY })
     .toFile(displayPath);
 
-  logInfo("upload", "Generated display image", { filename, displayPath });
-
   await sharp(filePath, baseOptions)
     .rotate()
     .resize({ width: THUMB_WIDTH, withoutEnlargement: true, fit: "inside" })
     .jpeg({ quality: 72 })
     .toFile(thumbPath);
+}
 
-  logInfo("upload", "Generated thumbnail image", { filename, thumbPath });
+function uploadFileToCos(filePath, filename, mimetype) {
+  return new Promise((resolve, reject) => {
+    cosClient.putObject(
+      {
+        Bucket: COS_BUCKET,
+        Region: COS_REGION,
+        Key: filename,
+        Body: fs.createReadStream(filePath),
+        ContentType: mimetype,
+        CacheControl: IMAGE_CACHE_CONTROL,
+      },
+      (error, data) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(data);
+      },
+    );
+  });
+}
+
+function deleteFileFromCos(filename) {
+  return new Promise((resolve, reject) => {
+    cosClient.deleteObject(
+      {
+        Bucket: COS_BUCKET,
+        Region: COS_REGION,
+        Key: filename,
+      },
+      (error, data) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(data);
+      },
+    );
+  });
+}
+
+function removeLocalFileIfExists(filePath) {
+  if (filePath && fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
 }
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    logInfo("upload", "Resolved upload destination", {
-      originalName: file.originalname,
-      destination: ORIGINALS_DIR,
-    });
     cb(null, ORIGINALS_DIR);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const ext = path.extname(file.originalname).toLowerCase();
-    const filename = `image-${uniqueSuffix}${ext}`;
-
-    logInfo("upload", "Generated upload filename", {
-      originalName: file.originalname,
-      filename,
-    });
-
-    cb(null, filename);
+    cb(null, `image-${uniqueSuffix}${ext}`);
   },
 });
 
@@ -427,31 +598,52 @@ const upload = multer({
     const allowed = /jpeg|jpg|png|gif|webp|bmp/;
     const ext = path.extname(file.originalname).toLowerCase();
 
-    logInfo("upload", "Validating uploaded file", {
-      originalName: file.originalname,
-      mimeType: file.mimetype,
-      extension: ext,
-      sizeLimitMB: 10,
-    });
-
     if (allowed.test(ext) && allowed.test(file.mimetype)) {
       cb(null, true);
       return;
     }
 
-    cb(new Error("只允许上传图片文件（jpg/png/gif/webp/bmp）。"));
+    cb(new Error("Only image files are allowed."));
   },
 });
 
 const emojiData = require("./emoji_data.json");
 
+function getLocalImages() {
+  const originalFiles = fs.existsSync(ORIGINALS_DIR)
+    ? fs.readdirSync(ORIGINALS_DIR).filter(isImageFilename)
+    : [];
+  const legacyFiles = fs.existsSync(UPLOADS_DIR)
+    ? fs
+        .readdirSync(UPLOADS_DIR)
+        .filter(
+          (filename) =>
+            isImageFilename(filename) && fs.statSync(path.join(UPLOADS_DIR, filename)).isFile(),
+        )
+    : [];
+
+  const files = [...new Set([...originalFiles, ...legacyFiles])];
+  return files
+    .map((filename) => {
+      const originalPath = path.join(ORIGINALS_DIR, filename);
+      const legacyPath = path.join(UPLOADS_DIR, filename);
+      const sourcePath = fs.existsSync(originalPath) ? originalPath : legacyPath;
+      return buildImageRecord(filename, sourcePath);
+    })
+    .sort((a, b) => b.uploadedAt - a.uploadedAt);
+}
+
+function getCosImages() {
+  return readImagesIndex()
+    .map((item) => buildImageRecord(item.filename, item.uploadedAt))
+    .sort((a, b) => b.uploadedAt - a.uploadedAt);
+}
+
 app.get("/api/emojis", (req, res) => res.json(emojiData));
 
 app.get("/api/links", (req, res) => {
   try {
-    const data = fs.readFileSync(LINKS_FILE, "utf8");
-    const parsed = JSON.parse(data);
-    const { normalized, changed } = normalizeLinksForStorage(parsed);
+    const { normalized, changed } = normalizeLinksForStorage(readJsonFile(LINKS_FILE, []));
     if (changed) {
       fs.writeFileSync(LINKS_FILE, JSON.stringify(normalized, null, 2), "utf8");
       logInfo("links", "Normalized links.json during read");
@@ -479,9 +671,23 @@ app.post("/api/links", (req, res) => {
 
 app.get("/api/background", (req, res) => {
   try {
-    const background = JSON.parse(fs.readFileSync(BACKGROUND_FILE, "utf8"));
+    const background = readJsonFile(BACKGROUND_FILE, defaultBackground);
     if (!background.filename) {
       res.json(background);
+      return;
+    }
+
+    if (isCosEnabled) {
+      const matching = readImagesIndex().find((item) => item.filename === background.filename);
+      if (!matching) {
+        res.json(background);
+        return;
+      }
+
+      res.json({
+        ...background,
+        ...buildImageRecord(background.filename, matching.uploadedAt),
+      });
       return;
     }
 
@@ -521,83 +727,61 @@ app.post("/api/background", (req, res) => {
   }
 });
 
-app.post("/api/upload", upload.single("image"), (req, res) => {
+app.post("/api/upload", upload.single("image"), async (req, res) => {
   logInfo("upload", "Incoming upload request", {
     ip: req.ip,
     contentType: req.headers["content-type"],
     contentLength: req.headers["content-length"],
+    storage: isCosEnabled ? "cos" : "local",
   });
 
   if (!req.file) {
-    logInfo("upload", "Upload rejected because no file was attached");
     res.status(400).json({ error: "No file uploaded" });
     return;
   }
 
   const { path: filePath, filename, originalname, mimetype, size } = req.file;
 
-  logInfo("upload", "File saved to originals directory", {
+  logInfo("upload", "File received", {
     filename,
     originalname,
     mimetype,
     size,
-    filePath,
-    exists: fs.existsSync(filePath),
   });
 
   try {
+    if (isCosEnabled) {
+      await uploadFileToCos(filePath, filename, mimetype);
+      removeLocalFileIfExists(filePath);
+      upsertImageIndex(filename, Date.now());
+      const image = buildImageRecord(filename, Date.now());
+      logInfo("upload", "Uploaded image to COS", {
+        filename,
+        originalUrl: image.originalUrl,
+      });
+      res.json({ success: true, ...image });
+      return;
+    }
+
     enqueueImageProcessing(filename, filePath);
     const image = buildImageRecord(filename, filePath);
-    logInfo("upload", "Upload accepted for async processing", {
-      filename,
-      status: image.status,
-    });
     res.json({ success: true, ...image });
   } catch (error) {
-    logError("upload", `Error queueing image processing for ${filename}`, error);
-    const fallback = {
-      success: true,
-      filename,
-      warning: "Image processing queue failed, using original image.",
-      originalUrl: `/uploads/originals/${filename}`,
-      url: "",
-      thumbUrl: "",
-      status: IMAGE_STATUS.FAILED,
-      errorMessage: error.message || "Image processing queue failed",
-    };
-    logInfo("upload", "Returning upload fallback response", fallback);
-    res.json(fallback);
+    logError("upload", `Error handling upload for ${filename}`, error);
+    res.status(500).json({ error: error.message || "Failed to upload image" });
   }
 });
 
 app.get("/api/images", (req, res) => {
   try {
-    const originalFiles = fs.existsSync(ORIGINALS_DIR)
-      ? fs.readdirSync(ORIGINALS_DIR).filter(isImageFilename)
-      : [];
-    const legacyFiles = fs
-      .readdirSync(UPLOADS_DIR)
-      .filter((filename) => isImageFilename(filename) && fs.statSync(path.join(UPLOADS_DIR, filename)).isFile());
-
-    const files = [...new Set([...originalFiles, ...legacyFiles])];
-    const images = files
-      .map((filename) => {
-        const originalPath = path.join(ORIGINALS_DIR, filename);
-        const legacyPath = path.join(UPLOADS_DIR, filename);
-        const sourcePath = fs.existsSync(originalPath) ? originalPath : legacyPath;
-
-        return buildImageRecord(filename, sourcePath);
-      })
-      .sort((a, b) => b.uploadedAt - a.uploadedAt);
-
-    res.json(images);
+    res.json(isCosEnabled ? getCosImages() : getLocalImages());
   } catch (error) {
     logError("images", "Error listing images", error);
     res.status(500).json({ error: "Failed to list images" });
   }
 });
 
-app.delete("/api/upload/:filename", (req, res) => {
+app.delete("/api/upload/:filename", async (req, res) => {
   try {
     const { filename } = req.params;
 
@@ -606,24 +790,30 @@ app.delete("/api/upload/:filename", (req, res) => {
       return;
     }
 
-    const { originalPath, displayPath, thumbPath } = getVariantPaths(filename);
-    const legacyPath = path.join(UPLOADS_DIR, filename);
+    if (isCosEnabled) {
+      await deleteFileFromCos(filename);
+      removeImageFromIndex(filename);
+    } else {
+      const { originalPath, displayPath, thumbPath } = getVariantPaths(filename);
+      const legacyPath = path.join(UPLOADS_DIR, filename);
 
-    if (!fs.existsSync(originalPath) && !fs.existsSync(legacyPath)) {
-      res.status(404).json({ error: "File not found" });
-      return;
+      if (!fs.existsSync(originalPath) && !fs.existsSync(legacyPath)) {
+        res.status(404).json({ error: "File not found" });
+        return;
+      }
+
+      [originalPath, displayPath, thumbPath, legacyPath].forEach((filePath) => {
+        removeLocalFileIfExists(filePath);
+      });
+
+      const queuedIndex = imageProcessingQueue.findIndex((task) => task.filename === filename);
+      if (queuedIndex >= 0) {
+        imageProcessingQueue.splice(queuedIndex, 1);
+      }
+      imageProcessingState.delete(filename);
     }
 
-    [originalPath, displayPath, thumbPath, legacyPath].forEach((filePath) => {
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    });
-    const queuedIndex = imageProcessingQueue.findIndex((task) => task.filename === filename);
-    if (queuedIndex >= 0) {
-      imageProcessingQueue.splice(queuedIndex, 1);
-    }
-    imageProcessingState.delete(filename);
-
-    const background = JSON.parse(fs.readFileSync(BACKGROUND_FILE, "utf8"));
+    const background = readJsonFile(BACKGROUND_FILE, defaultBackground);
     if (background.filename === filename) {
       background.filename = "";
       fs.writeFileSync(BACKGROUND_FILE, JSON.stringify(background, null, 2), "utf8");
@@ -648,9 +838,8 @@ if (fs.existsSync(DIST_DIR)) {
 
 app.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
-    logError("upload", `Multer error: ${error.code}`, error);
     if (error.code === "LIMIT_FILE_SIZE") {
-      res.status(400).json({ error: "文件过大，最大支持 10MB。" });
+      res.status(400).json({ error: "File is too large. The limit is 10MB." });
       return;
     }
     res.status(400).json({ error: error.message });
@@ -667,13 +856,11 @@ app.use((error, req, res, next) => {
 });
 
 app.listen(PORT, HOST, () => {
-  console.log(`\nServer running at http://${HOST}:${PORT}`);
-  console.log("API endpoints:");
-  console.log("  GET    /api/links");
-  console.log("  POST   /api/links");
-  console.log("  GET    /api/background");
-  console.log("  POST   /api/background");
-  console.log("  GET    /api/images");
-  console.log("  POST   /api/upload");
-  console.log("  DELETE /api/upload/:filename");
+  logInfo("init", "Server started", {
+    host: HOST,
+    port: PORT,
+    storage: isCosEnabled ? "cos" : "local",
+    cosBucket: isCosEnabled ? COS_BUCKET : "",
+    cosRegion: isCosEnabled ? COS_REGION : "",
+  });
 });

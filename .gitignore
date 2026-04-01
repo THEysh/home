@@ -7,6 +7,7 @@ node_modules
 dist
 nul
 temp_check.js
+.env
 uploads/
 links.json
 background.json
