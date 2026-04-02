@@ -57,6 +57,13 @@ const COS_STYLE_DISPLAY =
   process.env.COS_STYLE_DISPLAY || "imageMogr2/auto-orient/thumbnail/1920x>/format/jpg/interlace/1";
 const COS_STYLE_THUMB =
   process.env.COS_STYLE_THUMB || "imageMogr2/auto-orient/thumbnail/360x>/format/jpg/interlace/1";
+const COS_IMAGE_PREFIX = (() => {
+  const value = (process.env.COS_IMAGE_PREFIX || "search-home/").trim().replace(/^\/+/, "");
+  if (!value) {
+    return "";
+  }
+  return value.endsWith("/") ? value : `${value}/`;
+})();
 
 const isCosEnabled = Boolean(
   COS_BUCKET && COS_REGION && COS_SECRET_ID && COS_SECRET_KEY && COS_BASE_URL,
@@ -251,6 +258,12 @@ function readImagesIndex() {
 
 function saveImagesIndex(items) {
   fs.writeFileSync(IMAGES_FILE, JSON.stringify(items, null, 2), "utf8");
+}
+
+function getCachedCosImages() {
+  return readImagesIndex()
+    .map((item) => buildImageRecord(item.filename, item.uploadedAt))
+    .sort((a, b) => b.uploadedAt - a.uploadedAt);
 }
 
 function removePathRecursive(targetPath) {
@@ -448,6 +461,27 @@ function encodeObjectKey(key) {
     .join("/");
 }
 
+function getCosObjectKey(filename) {
+  return `${COS_IMAGE_PREFIX}${filename}`;
+}
+
+function getFilenameFromCosKey(key) {
+  if (!key || typeof key !== "string") {
+    return "";
+  }
+
+  if (!COS_IMAGE_PREFIX) {
+    return key;
+  }
+
+  return key.startsWith(COS_IMAGE_PREFIX) ? key.slice(COS_IMAGE_PREFIX.length) : "";
+}
+
+function parseCosUploadedAt(lastModified) {
+  const timestamp = Date.parse(lastModified || "");
+  return Number.isFinite(timestamp) ? timestamp : Date.now();
+}
+
 function appendCosStyle(url, styleValue) {
   if (!styleValue) {
     return url;
@@ -456,7 +490,8 @@ function appendCosStyle(url, styleValue) {
 }
 
 function getCosImageUrls(filename) {
-  const originalUrl = `${COS_BASE_URL}/${encodeObjectKey(filename)}`;
+  const objectKey = getCosObjectKey(filename);
+  const originalUrl = `${COS_BASE_URL}/${encodeObjectKey(objectKey)}`;
   return {
     originalUrl,
     url: appendCosStyle(originalUrl, COS_STYLE_DISPLAY),
@@ -637,6 +672,24 @@ function enqueuePendingImagesOnStartup() {
 
 enqueuePendingImagesOnStartup();
 
+async function refreshCosImagesCacheOnStartup() {
+  if (!isCosEnabled) {
+    return;
+  }
+
+  try {
+    const images = await refreshCosImagesCache();
+    logInfo("init", "Refreshed COS image cache on startup", {
+      prefix: COS_IMAGE_PREFIX,
+      count: images.length,
+    });
+  } catch (error) {
+    logError("init", "Failed to refresh COS image cache on startup", error);
+  }
+}
+
+refreshCosImagesCacheOnStartup();
+
 async function generateImageVariants(filePath, filename) {
   const { displayPath, thumbPath } = getVariantPaths(filename);
 
@@ -661,13 +714,120 @@ async function generateImageVariants(filePath, filename) {
     .toFile(thumbPath);
 }
 
+function listCosObjects(marker = "") {
+  return new Promise((resolve, reject) => {
+    cosClient.getBucket(
+      {
+        Bucket: COS_BUCKET,
+        Region: COS_REGION,
+        Prefix: COS_IMAGE_PREFIX,
+        Marker: marker,
+      },
+      (error, data) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(data);
+      },
+    );
+  });
+}
+
+async function listAllCosImages() {
+  const records = [];
+  let marker = "";
+
+  do {
+    const data = await listCosObjects(marker);
+    const contents = Array.isArray(data.Contents) ? data.Contents : [];
+
+    contents.forEach((item) => {
+      const filename = getFilenameFromCosKey(item.Key);
+      if (!filename || !isImageFilename(filename)) {
+        return;
+      }
+
+      records.push(buildImageRecord(filename, parseCosUploadedAt(item.LastModified)));
+    });
+
+    const isTruncated = String(data.IsTruncated || "false").toLowerCase() === "true";
+    marker = isTruncated ? data.NextMarker || contents.at(-1)?.Key || "" : "";
+  } while (marker);
+
+  records.sort((a, b) => b.uploadedAt - a.uploadedAt);
+  return records;
+}
+
+async function refreshCosImagesCache() {
+  const images = await listAllCosImages();
+  saveImagesIndex(
+    images.map((item) => ({
+      filename: item.filename,
+      uploadedAt: item.uploadedAt,
+    })),
+  );
+  return images;
+}
+
+async function getCosImages() {
+  try {
+    return await refreshCosImagesCache();
+  } catch (error) {
+    logError("images", "Failed to list COS images, falling back to cached images.json", error);
+    return getCachedCosImages();
+  }
+}
+
+function headCosObject(filename) {
+  return new Promise((resolve, reject) => {
+    cosClient.headObject(
+      {
+        Bucket: COS_BUCKET,
+        Region: COS_REGION,
+        Key: getCosObjectKey(filename),
+      },
+      (error, data) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(data);
+      },
+    );
+  });
+}
+
+async function getCosImageRecord(filename) {
+  try {
+    const data = await headCosObject(filename);
+    const uploadedAt = parseCosUploadedAt(data.headers?.["last-modified"]);
+    const record = buildImageRecord(filename, uploadedAt);
+    upsertImageIndex(filename, uploadedAt);
+    return record;
+  } catch (error) {
+    if (error?.statusCode === 404 || error?.error?.Code === "NoSuchKey") {
+      removeImageFromIndex(filename);
+      return null;
+    }
+
+    const cached = readImagesIndex().find((item) => item.filename === filename);
+    if (cached) {
+      logError("background", "Failed to verify COS image, falling back to cached metadata", error);
+      return buildImageRecord(filename, cached.uploadedAt);
+    }
+
+    throw error;
+  }
+}
+
 function uploadFileToCos(filePath, filename, mimetype) {
   return new Promise((resolve, reject) => {
     cosClient.putObject(
       {
         Bucket: COS_BUCKET,
         Region: COS_REGION,
-        Key: filename,
+        Key: getCosObjectKey(filename),
         Body: fs.createReadStream(filePath),
         ContentType: mimetype,
         CacheControl: IMAGE_CACHE_CONTROL,
@@ -689,7 +849,7 @@ function deleteFileFromCos(filename) {
       {
         Bucket: COS_BUCKET,
         Region: COS_REGION,
-        Key: filename,
+        Key: getCosObjectKey(filename),
       },
       (error, data) => {
         if (error) {
@@ -761,12 +921,6 @@ function getLocalImages() {
     .sort((a, b) => b.uploadedAt - a.uploadedAt);
 }
 
-function getCosImages() {
-  return readImagesIndex()
-    .map((item) => buildImageRecord(item.filename, item.uploadedAt))
-    .sort((a, b) => b.uploadedAt - a.uploadedAt);
-}
-
 app.get("/api/emojis", (req, res) => res.json(emojiData));
 
 app.get("/api/links", (req, res) => {
@@ -797,7 +951,7 @@ app.post("/api/links", (req, res) => {
   }
 });
 
-app.get("/api/background", (req, res) => {
+app.get("/api/background", async (req, res) => {
   try {
     const background = readJsonFile(BACKGROUND_FILE, defaultBackground);
     if (!background.filename) {
@@ -806,7 +960,7 @@ app.get("/api/background", (req, res) => {
     }
 
     if (isCosEnabled) {
-      const matching = readImagesIndex().find((item) => item.filename === background.filename);
+      const matching = await getCosImageRecord(background.filename);
       if (!matching) {
         res.json(background);
         return;
@@ -814,7 +968,7 @@ app.get("/api/background", (req, res) => {
 
       res.json({
         ...background,
-        ...buildImageRecord(background.filename, matching.uploadedAt),
+        ...matching,
       });
       return;
     }
@@ -900,9 +1054,9 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
   }
 });
 
-app.get("/api/images", (req, res) => {
+app.get("/api/images", async (req, res) => {
   try {
-    res.json(isCosEnabled ? getCosImages() : getLocalImages());
+    res.json(isCosEnabled ? await getCosImages() : getLocalImages());
   } catch (error) {
     logError("images", "Error listing images", error);
     res.status(500).json({ error: "Failed to list images" });
@@ -990,5 +1144,6 @@ app.listen(PORT, HOST, () => {
     storage: isCosEnabled ? "cos" : "local",
     cosBucket: isCosEnabled ? COS_BUCKET : "",
     cosRegion: isCosEnabled ? COS_REGION : "",
+    cosPrefix: isCosEnabled ? COS_IMAGE_PREFIX : "",
   });
 });
