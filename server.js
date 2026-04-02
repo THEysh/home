@@ -26,13 +26,16 @@ const DIST_DIR = path.join(APP_DIR, "dist");
 const LINKS_FILE = path.join(DATA_DIR, "links.json");
 const BACKGROUND_FILE = path.join(DATA_DIR, "background.json");
 const IMAGES_FILE = path.join(DATA_DIR, "images.json");
-const LINKS_EXAMPLE_FILE = path.join(APP_DIR, "links.example.json");
-const BACKGROUND_EXAMPLE_FILE = path.join(APP_DIR, "background.example.json");
-const IMAGES_EXAMPLE_FILE = path.join(APP_DIR, "images.example.json");
+const LINKS_EXAMPLE_FILE = path.join(DATA_DIR, "links.example.json");
+const BACKGROUND_EXAMPLE_FILE = path.join(DATA_DIR, "background.example.json");
+const IMAGES_EXAMPLE_FILE = path.join(DATA_DIR, "images.example.json");
 const LEGACY_UPLOADS_DIR = path.join(APP_DIR, "uploads");
 const LEGACY_LINKS_FILE = path.join(APP_DIR, "links.json");
 const LEGACY_BACKGROUND_FILE = path.join(APP_DIR, "background.json");
 const LEGACY_IMAGES_FILE = path.join(APP_DIR, "images.json");
+const LEGACY_LINKS_EXAMPLE_FILE = path.join(APP_DIR, "links.example.json");
+const LEGACY_BACKGROUND_EXAMPLE_FILE = path.join(APP_DIR, "background.example.json");
+const LEGACY_IMAGES_EXAMPLE_FILE = path.join(APP_DIR, "images.example.json");
 
 const DISPLAY_MAX_WIDTH = 1920;
 const THUMB_WIDTH = 360;
@@ -370,6 +373,24 @@ function initializeFiles() {
     logInfo(
       "init",
       `Migrated legacy ${type} to data directory: ${path.relative(APP_DIR, legacyPath)}`,
+    );
+  });
+
+  const legacyExampleFiles = [
+    { legacyPath: LEGACY_LINKS_EXAMPLE_FILE, targetPath: LINKS_EXAMPLE_FILE },
+    { legacyPath: LEGACY_BACKGROUND_EXAMPLE_FILE, targetPath: BACKGROUND_EXAMPLE_FILE },
+    { legacyPath: LEGACY_IMAGES_EXAMPLE_FILE, targetPath: IMAGES_EXAMPLE_FILE },
+  ];
+
+  legacyExampleFiles.forEach(({ legacyPath, targetPath }) => {
+    if (!fs.existsSync(legacyPath) || fs.existsSync(targetPath)) {
+      return;
+    }
+
+    movePathWithFallback(legacyPath, targetPath);
+    logInfo(
+      "init",
+      `Migrated example file to data directory: ${path.relative(APP_DIR, legacyPath)}`,
     );
   });
 

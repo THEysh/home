@@ -31,9 +31,9 @@ COPY --from=production-deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY server.js ./
 COPY emoji_data.json ./
-COPY links.example.json ./
-COPY background.example.json ./
-COPY images.example.json ./
+COPY data/links.example.json /data/links.example.json
+COPY data/background.example.json /data/background.example.json
+COPY data/images.example.json /data/images.example.json
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN mkdir -p /data/uploads/originals /data/uploads/display /data/uploads/thumbs \

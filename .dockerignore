@@ -12,8 +12,8 @@ coverage
 tests
 __tests__
 *.md
-.vscode
 .idea
-data
+data/*
+!data/*.example.json
 uploads
 *.log
