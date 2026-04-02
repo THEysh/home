@@ -14,15 +14,25 @@ const HOST = "0.0.0.0";
 app.use(cors());
 app.use(express.json());
 
-const DATA_DIR = __dirname;
+const APP_DIR = __dirname;
+const DATA_DIR = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : path.join(APP_DIR, "data");
 const UPLOADS_DIR = path.join(DATA_DIR, "uploads");
 const ORIGINALS_DIR = path.join(UPLOADS_DIR, "originals");
 const DISPLAY_DIR = path.join(UPLOADS_DIR, "display");
 const THUMBS_DIR = path.join(UPLOADS_DIR, "thumbs");
-const DIST_DIR = path.join(DATA_DIR, "dist");
+const DIST_DIR = path.join(APP_DIR, "dist");
 const LINKS_FILE = path.join(DATA_DIR, "links.json");
 const BACKGROUND_FILE = path.join(DATA_DIR, "background.json");
 const IMAGES_FILE = path.join(DATA_DIR, "images.json");
+const LINKS_EXAMPLE_FILE = path.join(APP_DIR, "links.example.json");
+const BACKGROUND_EXAMPLE_FILE = path.join(APP_DIR, "background.example.json");
+const IMAGES_EXAMPLE_FILE = path.join(APP_DIR, "images.example.json");
+const LEGACY_UPLOADS_DIR = path.join(APP_DIR, "uploads");
+const LEGACY_LINKS_FILE = path.join(APP_DIR, "links.json");
+const LEGACY_BACKGROUND_FILE = path.join(APP_DIR, "background.json");
+const LEGACY_IMAGES_FILE = path.join(APP_DIR, "images.json");
 
 const DISPLAY_MAX_WIDTH = 1920;
 const THUMB_WIDTH = 360;
@@ -243,6 +253,78 @@ function saveImagesIndex(items) {
   fs.writeFileSync(IMAGES_FILE, JSON.stringify(items, null, 2), "utf8");
 }
 
+function removePathRecursive(targetPath) {
+  if (!fs.existsSync(targetPath)) {
+    return;
+  }
+
+  fs.rmSync(targetPath, { recursive: true, force: true });
+}
+
+function copyPathRecursive(sourcePath, targetPath) {
+  const stat = fs.statSync(sourcePath);
+
+  if (stat.isDirectory()) {
+    fs.mkdirSync(targetPath, { recursive: true });
+    fs.readdirSync(sourcePath).forEach((entry) => {
+      copyPathRecursive(path.join(sourcePath, entry), path.join(targetPath, entry));
+    });
+    return;
+  }
+
+  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+  fs.copyFileSync(sourcePath, targetPath);
+}
+
+function mergeDirectoryContents(sourceDir, targetDir) {
+  fs.mkdirSync(targetDir, { recursive: true });
+
+  fs.readdirSync(sourceDir).forEach((entry) => {
+    const sourceEntry = path.join(sourceDir, entry);
+    const targetEntry = path.join(targetDir, entry);
+    const sourceStat = fs.statSync(sourceEntry);
+
+    if (sourceStat.isDirectory()) {
+      if (fs.existsSync(targetEntry) && fs.statSync(targetEntry).isDirectory()) {
+        mergeDirectoryContents(sourceEntry, targetEntry);
+      } else {
+        movePathWithFallback(sourceEntry, targetEntry);
+      }
+      return;
+    }
+
+    fs.mkdirSync(path.dirname(targetEntry), { recursive: true });
+    fs.copyFileSync(sourceEntry, targetEntry);
+    fs.unlinkSync(sourceEntry);
+  });
+
+  removePathRecursive(sourceDir);
+}
+
+function movePathWithFallback(sourcePath, targetPath) {
+  try {
+    fs.renameSync(sourcePath, targetPath);
+    return;
+  } catch (error) {
+    if (error.code !== "EXDEV") {
+      throw error;
+    }
+  }
+
+  copyPathRecursive(sourcePath, targetPath);
+  removePathRecursive(sourcePath);
+}
+
+function flattenNestedUploadDirectory(parentDir, folderName) {
+  const nestedDir = path.join(parentDir, folderName);
+  if (!fs.existsSync(nestedDir) || !fs.statSync(nestedDir).isDirectory()) {
+    return;
+  }
+
+  mergeDirectoryContents(nestedDir, parentDir);
+  logInfo("init", `Flattened nested upload directory: ${path.relative(APP_DIR, nestedDir)}`);
+}
+
 function upsertImageIndex(filename, uploadedAt = Date.now()) {
   const images = readImagesIndex().filter((item) => item.filename !== filename);
   images.unshift({ filename, uploadedAt });
@@ -255,42 +337,87 @@ function removeImageFromIndex(filename) {
 }
 
 function initializeFiles() {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    logInfo("init", `Created data directory: ${DATA_DIR}`);
+  }
+
+  const legacyFiles = [
+    { legacyPath: LEGACY_LINKS_FILE, targetPath: LINKS_FILE, type: "file" },
+    { legacyPath: LEGACY_BACKGROUND_FILE, targetPath: BACKGROUND_FILE, type: "file" },
+    { legacyPath: LEGACY_IMAGES_FILE, targetPath: IMAGES_FILE, type: "file" },
+  ];
+
+  legacyFiles.forEach(({ legacyPath, targetPath, type }) => {
+    if (!fs.existsSync(legacyPath) || fs.existsSync(targetPath)) {
+      return;
+    }
+
+    movePathWithFallback(legacyPath, targetPath);
+    logInfo(
+      "init",
+      `Migrated legacy ${type} to data directory: ${path.relative(APP_DIR, legacyPath)}`,
+    );
+  });
+
+  if (fs.existsSync(LEGACY_UPLOADS_DIR)) {
+    if (fs.existsSync(UPLOADS_DIR)) {
+      mergeDirectoryContents(LEGACY_UPLOADS_DIR, UPLOADS_DIR);
+    } else {
+      movePathWithFallback(LEGACY_UPLOADS_DIR, UPLOADS_DIR);
+    }
+    logInfo("init", "Migrated legacy directory to data directory: uploads");
+  }
+
   [UPLOADS_DIR, ORIGINALS_DIR, DISPLAY_DIR, THUMBS_DIR].forEach((dir) => {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
-      logInfo("init", `Created directory: ${path.relative(__dirname, dir)}`);
+      logInfo("init", `Created directory: ${path.relative(APP_DIR, dir)}`);
     }
   });
 
+  flattenNestedUploadDirectory(DISPLAY_DIR, "display");
+  flattenNestedUploadDirectory(ORIGINALS_DIR, "originals");
+  flattenNestedUploadDirectory(THUMBS_DIR, "thumbs");
+
   if (!fs.existsSync(LINKS_FILE)) {
-    fs.writeFileSync(LINKS_FILE, JSON.stringify(defaultLinks, null, 2), "utf8");
-    logInfo("init", "Created links.json with default links");
+    const defaultLinksPayload = fs.existsSync(LINKS_EXAMPLE_FILE)
+      ? readJsonFile(LINKS_EXAMPLE_FILE, defaultLinks)
+      : defaultLinks;
+    fs.writeFileSync(LINKS_FILE, JSON.stringify(defaultLinksPayload, null, 2), "utf8");
+    logInfo("init", "Created data/links.json with default links");
   } else {
     try {
       const { normalized, changed } = normalizeLinksForStorage(readJsonFile(LINKS_FILE, []));
       if (changed) {
         fs.writeFileSync(LINKS_FILE, JSON.stringify(normalized, null, 2), "utf8");
-        logInfo("init", "Normalized existing links.json structure");
+        logInfo("init", "Normalized existing data/links.json structure");
       }
     } catch (error) {
-      logError("init", "Failed to normalize existing links.json, resetting to defaults", error);
+      logError("init", "Failed to normalize existing data/links.json, resetting to defaults", error);
       fs.writeFileSync(LINKS_FILE, JSON.stringify(defaultLinks, null, 2), "utf8");
     }
   }
 
   if (!fs.existsSync(BACKGROUND_FILE)) {
-    fs.writeFileSync(BACKGROUND_FILE, JSON.stringify(defaultBackground, null, 2), "utf8");
-    logInfo("init", "Created background.json with default values");
+    const defaultBackgroundPayload = fs.existsSync(BACKGROUND_EXAMPLE_FILE)
+      ? readJsonFile(BACKGROUND_EXAMPLE_FILE, defaultBackground)
+      : defaultBackground;
+    fs.writeFileSync(BACKGROUND_FILE, JSON.stringify(defaultBackgroundPayload, null, 2), "utf8");
+    logInfo("init", "Created data/background.json with default values");
   }
 
   if (!fs.existsSync(IMAGES_FILE)) {
-    fs.writeFileSync(IMAGES_FILE, "[]", "utf8");
-    logInfo("init", "Created images.json");
+    const defaultImagesPayload = fs.existsSync(IMAGES_EXAMPLE_FILE)
+      ? readJsonFile(IMAGES_EXAMPLE_FILE, [])
+      : [];
+    fs.writeFileSync(IMAGES_FILE, JSON.stringify(defaultImagesPayload, null, 2), "utf8");
+    logInfo("init", "Created data/images.json");
   } else {
     const { normalized, changed } = normalizeImagesIndex(readJsonFile(IMAGES_FILE, []));
     if (changed) {
       fs.writeFileSync(IMAGES_FILE, JSON.stringify(normalized, null, 2), "utf8");
-      logInfo("init", "Normalized images.json structure");
+      logInfo("init", "Normalized data/images.json structure");
     }
   }
 }
@@ -608,7 +735,7 @@ const upload = multer({
   },
 });
 
-const emojiData = require("./emoji_data.json");
+const emojiData = require(path.join(APP_DIR, "emoji_data.json"));
 
 function getLocalImages() {
   const originalFiles = fs.existsSync(ORIGINALS_DIR)

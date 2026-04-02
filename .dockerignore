@@ -14,3 +14,6 @@ __tests__
 *.md
 .vscode
 .idea
+data
+uploads
+*.log

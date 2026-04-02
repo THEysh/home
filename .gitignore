@@ -8,6 +8,9 @@ dist
 nul
 temp_check.js
 .env
+data/
 uploads/
 links.json
 background.json
+images.json
+server-*.log

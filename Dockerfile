@@ -23,6 +23,7 @@ RUN apk add --no-cache su-exec \
     && addgroup -S nodejs \
     && adduser -S appuser -G nodejs
 
+ENV DATA_DIR="/data"
 ENV COS_STYLE_DISPLAY="imageMogr2/auto-orient/thumbnail/1920x>/format/jpg/interlace/1"
 ENV COS_STYLE_THUMB="imageMogr2/auto-orient/thumbnail/360x>/format/jpg/interlace/1"
 
@@ -35,7 +36,7 @@ COPY background.example.json ./
 COPY images.example.json ./
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-RUN mkdir -p uploads/originals uploads/display uploads/thumbs \
+RUN mkdir -p /data/uploads/originals /data/uploads/display /data/uploads/thumbs \
     && chmod +x /usr/local/bin/docker-entrypoint.sh \
     && chown -R appuser:nodejs /app
 
